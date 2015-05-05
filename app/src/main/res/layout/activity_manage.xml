@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:id="@+id/textViewManageHeader1"
+    android:textAlignment="center"
+    style="@style/layout_centered">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Remind Me - Manage"
+        android:id="@+id/textViewManageHeader"
+        android:gravity="center"
+        android:layout_alignParentTop="true"
+        android:textAlignment="center"
+        android:textSize="@dimen/abc_text_size_title_material"
+        android:textStyle="bold"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:background="#ffffa74f" />
+
+    <Spinner
+        android:layout_width="match_parent"
+        android:layout_height="49dp"
+        android:id="@+id/spinnerReminders"
+        android:layout_marginTop="28dp"
+        android:layout_below="@+id/textViewManageHeader"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:spinnerMode="dropdown"
+        style="@style/Widget.AppCompat.Spinner.DropDown.ActionBar" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="New"
+        android:id="@+id/buttonNewReminder"
+        android:clickable="true"
+        android:onClick="goNewReminder"
+        android:layout_marginLeft="5dp"
+        android:layout_alignTop="@+id/buttonDelete"
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit"
+        android:id="@+id/buttonEditReminder"
+        android:onClick="goEditReminder"
+        android:layout_marginLeft="5dp"
+        android:layout_alignTop="@+id/buttonNewReminder"
+        android:layout_toEndOf="@+id/buttonNewReminder" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        android:id="@+id/buttonCancel"
+        android:onClick="goCancel"
+        android:layout_marginLeft="5dp"
+        android:layout_alignTop="@+id/buttonSelect"
+        android:layout_toEndOf="@+id/buttonSelect" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select"
+        android:id="@+id/buttonSelect"
+        android:onClick="goSelectReminder"
+        android:layout_marginTop="30dp"
+        android:layout_below="@+id/buttonDelete"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="5dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Delete"
+        android:id="@+id/buttonDelete"
+        android:layout_marginTop="29dp"
+        android:onClick="goDelete"
+        android:layout_marginLeft="5dp"
+        android:layout_below="@+id/spinnerReminders"
+        android:layout_toEndOf="@+id/buttonEditReminder" />
+
+</RelativeLayout>
