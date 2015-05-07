@@ -268,7 +268,8 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         reminder.setFrequency(textViewFrequency.getText().toString());
         //times are updated in updateTimes method
         //days are updated EditDaysActivity or in goSelectDays
-        reminder.setMisc(radioRecurring.isChecked(),radioNotification.isChecked(), spinnerSelectAlarm.getSelectedItemPosition());
+        reminder.setMisc(radioRecurring.isChecked(),radioNotification.isChecked(),
+                spinnerSelectAlarm.getSelectedItemPosition());
 
         Intent data = getIntent();
         data.putExtra("reminder",reminder);

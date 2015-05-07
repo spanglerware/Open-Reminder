@@ -24,10 +24,16 @@ public class MyAlarmActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         this.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED,
+            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
+            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
+            WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED);
+
         setContentView(R.layout.alarm_activity_layout);
 
-        //todo need to pass in message ID and reminder text
+        //todo need to pass in reminder ID and reminder text
         //load interface with data in case of an edit
         Intent intent = getIntent();
         int messageId = intent.getIntExtra("messageId", 1);
@@ -36,8 +42,7 @@ public class MyAlarmActivity extends Activity {
         TextView textView = (TextView) findViewById(R.id.textViewAlarmReminder);
         textView.setText(reminder);
 
-        messageId = songId.get(messageId);
-        mediaPlayer = MediaPlayer.create(this, messageId);
+        mediaPlayer = MediaPlayer.create(this, songId.get(messageId));
         mediaPlayer.setLooping(true);
         mediaPlayer.start();
     }

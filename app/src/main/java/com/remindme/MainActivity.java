@@ -11,7 +11,9 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.PowerManager;
 import android.os.SystemClock;
+import android.support.v4.content.WakefulBroadcastReceiver;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,6 +21,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -58,8 +61,15 @@ public class MainActivity extends Activity {
 
     private ArrayList<MyAlarm> alarmArray;
     private int alarmCounter;
+    private static MainActivity inst;
+    private PowerManager.WakeLock wakeLock;
+
+
+
 
     //TODO display an alarm/notification screen/dialog if message fires while app is in background, currently stays in background
+
+    //todo need icons for app and notification
 
     //todo fix spinner list position for main screen
 
@@ -109,20 +119,31 @@ public class MainActivity extends Activity {
         registerSpinnerSelectionEvent();
         registerSpinnerOnTouchEvent();
         callHandler();
+
+
+        //end of MainActivity onCreate
     }
 
     @Override
     protected void onPause() {
+        //wakeLock.release();
         super.onPause();
         //todo need to store time values?
         Log.v("onPause", "Main fired onPause");
         //from documentation: When an activity's onPause() method is called, it should commit to the backing content provider or file any changes the user has made.
     }
 
+    @Override
     protected void onStop() {
         super.onStop();
         //todo this method called when activity no longer visible, may need to store data on this call
         Log.v("onStop", "Main fired onStop");
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        inst = this;
     }
 
     @Override
@@ -155,11 +176,18 @@ public class MainActivity extends Activity {
         timerRunnable = new Runnable() {
             @Override
             public void run() {
-                myAdapter.notifyDataSetChanged();
-                timerHandler.postDelayed(this, 1000); //run every second
-                if (myAdapter.reduceCounters(1000)) {
-                    setButtonImage(true);
+                int interval = 1000;
+                timerHandler.postDelayed(this, interval); //run every second
+                for (Reminder reminder : dataArray) {
+                    if (reminder.isActive()) {
+                        Log.v("active reminder counter", reminder.getCounterAsString());
+                        if (reminder.reduceCounter(interval)) {
+                            Log.v("reduced counter", reminder.getCounterAsString());
+                            startReminder(reminder);
+                        }
+                    }
                 }
+                myAdapter.notifyDataSetChanged();
             }
         };
         timerRunnable.run();
@@ -224,14 +252,14 @@ public class MainActivity extends Activity {
                 item.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
                 item.setTimes(timeFrom, timeTo);
                 item.setMisc(reminderUseType, notificationType, messageId);
-                item.setMessage(getBaseContext(), i);
+                item.setReminderId(i);
                 dataArray.add(i, item);
 
                 cursor.moveToNext();
             }
         }
         //set up the custom adapter
-        myAdapter = new MyAdapter(this,dataArray);
+        myAdapter = new MyAdapter(this, dataArray);
     }
 
     private void addItemsToSpinner() {
@@ -243,8 +271,10 @@ public class MainActivity extends Activity {
     private void updateReminders() {
         for (Reminder reminder : dataArray) {
             if (reminder.isActive()) {
-                reminder.updateCounter();
-                myAdapter.reduceCounters(0);
+                if (reminder.updateCounter()) {
+
+                }
+                //myAdapter.reduceCounters(0);
                 if (!reminder.isActive()) {
                     setButtonImage(true);
                 } else {
@@ -284,6 +314,7 @@ public class MainActivity extends Activity {
         reminder.setDays(false,false,false,false,false,false,false);
         reminder.setTimes("09:00", "17:00");
         reminder.setMisc(true, true, 0);
+        reminder.setReminderId(dataArray.size());
 
         intent.putExtra("reminder", reminder);
         startActivityForResult(intent, REQUEST_NEW);
@@ -291,20 +322,18 @@ public class MainActivity extends Activity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode,resultCode,this.getIntent());
+        super.onActivityResult(requestCode, resultCode, this.getIntent());
 
         if (resultCode == Activity.RESULT_OK) {
             Reminder reminder = data.getParcelableExtra("reminder");
             switch (requestCode) {
                 case (REQUEST_NEW): {
                         //result is from successful insert of new reminder
-                        reminder.setMessage(getBaseContext(), dataArray.size() + 1);
                         dataArray.add(reminder);
                     break;
                 }
                 case (REQUEST_EDIT): {
                         //result is from successful edit
-                        reminder.setMessage(getBaseContext(), spinnerRow);
                         dataArray.set(spinnerRow, reminder);
                     break;
                 }
@@ -317,21 +346,60 @@ public class MainActivity extends Activity {
         int position = spinner.getSelectedItemPosition();
         Reminder reminder = dataArray.get(position);
 
+        //todo may want to move some of these statements to after if conditions
+
         if (bStarted) {
-            bStarted = false;
-            reminder.setActive(false);
-            reminder.cancelAlarm();
+            if (reminder.getNotificationType()) {
+                //todo move out of if
+                cancelReminder(reminder);
+            } else {
+                cancelReminder(reminder);
+            }
         } else {
-            bStarted = true;
-            reminder.setActive(true);
-            //startAlarm((int) item.getLongFrequency());
-            reminder.startAlarm();
+            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
+            if (reminder.getNotificationType()) {
+                //todo move out of if
+                startReminder(reminder);
+            } else {
+                startReminder(reminder);
+            }
         }
-        setButtonImage(!bStarted);
         myAdapter.notifyDataSetChanged();
 
         //todo wait does not work, need to capture current time, store it, cancel button, then restart with stored value
     }
+
+    private void startReminder(Reminder reminder) {
+        int reminderId = reminder.getReminderId();
+        long alarmTime = reminder.getAlarmTime();
+        reminder.setActive(true);
+        bStarted = true;
+        setButtonImage(false);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+        alarmIntent.putExtra("reminder", reminder.getReminder());
+        alarmIntent.putExtra("reminderId", reminderId);
+        alarmIntent.putExtra("messageId", reminder.getMessageId());
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId,
+                alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
+    }
+
+    private void cancelReminder(Reminder reminder) {
+        int reminderId = reminder.getReminderId();
+        reminder.setActive(false);
+        bStarted = false;
+        setButtonImage(true);
+
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, reminderId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+
+        pendingIntent.cancel();
+    }
+
 
     private void setButtonImage(boolean toStart) {
         if (toStart) {

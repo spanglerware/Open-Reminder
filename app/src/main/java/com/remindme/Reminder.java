@@ -19,8 +19,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Scott on 4/26/2015.
  */
-public class Reminder implements Parcelable {
-    private long rowId;
+public class Reminder implements Parcelable {  //implements parcelable so the data can be sent between activities
+    private long rowId;  //id of reminder in the database
+    private int reminderId; //id of reminder that corresponds with position in dataArray
     private String reminder;
     private String frequency;
     private long timeFrom;
@@ -30,9 +31,8 @@ public class Reminder implements Parcelable {
     private ArrayList<Integer> messageDays;
     private boolean reminderUseType;  //true for recurring, false for single use
     private boolean notificationType;  //true for notification, false for alarm
-    private int messageId;
-    private MyAlarm myAlarm;
-    private int alarmId;
+    private int messageId; //this is the position of the alarm or notification sound setting
+    private long alarmTime;  //this time is when the next alarm is set for
 
     private boolean active;
     private Time counter;
@@ -42,14 +42,16 @@ public class Reminder implements Parcelable {
     LocalTime localTimeFrom;
     LocalTime localTimeTo;
 
+
     public Reminder (String rem, String freq, long id) {
         reminder = rem;
         frequency = freq;
         intFrequency = Integer.parseInt(frequency) * 60000;
         rowId = id;
         active = false;
-        counter = new Time(0);
+        counter = new Time(intFrequency);
         messageDays = new ArrayList<Integer>();
+        alarmTime = 0;
     }
 
     public int describeContents() {
@@ -74,11 +76,11 @@ public class Reminder implements Parcelable {
         parcel.writeByte((byte) (notificationType ? 1 : 0));
         parcel.writeInt(messageId);
         parcel.writeByte((byte) (active ? 1 : 0));
-        parcel.writeInt(alarmId);
+        parcel.writeInt(reminderId);
         parcel.writeList(messageDays);
         parcel.writeValue(localTimeFrom);
         parcel.writeValue(localTimeTo);
-
+        parcel.writeLong(alarmTime);
     }
 
     private Reminder(Parcel in) {
@@ -99,10 +101,11 @@ public class Reminder implements Parcelable {
         notificationType = in.readByte() != 0;
         messageId = in.readInt();
         active = in.readByte() != 0;
-        alarmId = in.readInt();
+        reminderId = in.readInt();
         messageDays = in.readArrayList(null);
         localTimeFrom = (LocalTime) in.readValue(null);
         localTimeTo = (LocalTime) in.readValue(null);
+        alarmTime = in.readLong();
     }
 
     public static final Parcelable.Creator<Reminder> CREATOR = new Creator<Reminder>() {
@@ -121,17 +124,13 @@ public class Reminder implements Parcelable {
         return rowId;
     }
 
-    public String getReminder() {
-        return reminder;
-    }
+    public String getReminder() { return reminder; }
 
     public String getFrequency() { return frequency; }
 
     public int getIntFrequency() { return intFrequency; }
 
-    public int getFrequencyMinutes() {
-        return (intFrequency / 60000);
-    }
+    public int getFrequencyMinutes() { return (intFrequency / 60000); }
 
     public long getTimeFrom() { return timeFrom; }
 
@@ -158,16 +157,16 @@ public class Reminder implements Parcelable {
 
     public int getMessageId() { return messageId; }
 
-    public long getCounter() {
-        return counter.getTime();
-    }
+    public long getCounter() { return counter.getTime(); }
+
+    public long getAlarmTime() { return alarmTime; }
+
+    public int getReminderId() { return reminderId; }
 
     public boolean isActive() { return active; }
 
 
-    public void setReminder(String stringReminder) {
-        reminder = stringReminder;
-    }
+    public void setReminder(String stringReminder) { reminder = stringReminder; }
 
     public void setFrequency(String stringFrequency) {
         frequency = stringFrequency;
@@ -211,11 +210,10 @@ public class Reminder implements Parcelable {
         timeTo = time.getTime();
     }
 
-    //todo may want to set inactive if sent to Edit, would also reset counter?
+    //the active flag indicates if the reminder currently is counting down
     public void setActive(boolean bActive) {
         active = bActive;
         if (active) {
-            //todo this may reset the counter any time the class is sent to another activity
             if (counter != null) {
                 counter.setTime(intFrequency);
             } else {
@@ -230,22 +228,11 @@ public class Reminder implements Parcelable {
         messageId = iMessageId;
     }
 
-    public void setMessage(Context context, int listPosition) {
-        alarmId = listPosition;
-        myAlarm = new MyAlarm(context, alarmId, intFrequency, messageId, reminder);
-
-        //todo set up myNotification here as well
+    public void setReminderId(int listPosition) {
+        reminderId = listPosition;
     }
 
-    public void startAlarm() {
-        myAlarm.start();
-        active = true;
-    }
-
-    public void cancelAlarm() {
-        myAlarm.cancel();
-        active = false;
-    }
+    public void setAlarmTime (long time) { alarmTime = time; }
 
     public void startCounter() {
         counter.setTime(intFrequency);
@@ -257,34 +244,25 @@ public class Reminder implements Parcelable {
         if (time == 0) {
             strTimer = "Complete";
         } else {
-            //todo need to add days to strTimer?
+            //todo will need to add days to strTimer
             strTimer = ("" + String.format(FORMAT,
                     TimeUnit.MILLISECONDS.toHours(time),
                     TimeUnit.MILLISECONDS.toMinutes(time) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(time)),
                     TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time))));
         }
-/*        Log.v("reminder counter", strTimer); //todo firing 3 times per second? why??
-
-        LocalTime localTime = LocalTime.now();
-        long millis = localTime.getMillisOfDay();
-
-        Log.v("Local Time now millis", String.valueOf(millis));
-        Log.v("Local Time To millis", String.valueOf(localTimeTo.getMillisOfDay()));
-        */
-
+        //Log.v("reminder counter", strTimer);
         return (strTimer);
     }
 
     //reduce counter method is used to decrement the count down variable used to display the reminder time
-    //todo if alarm dialog is clicked too soon the next alarm will not be scheduled
-    //todo countdown timers can get delayed based on when dialog is clicked, may need to refresh counters every so often
-    public boolean reduceCounter(long increment, Context context) {
+    //todo countdown timers can get delayed based on when dialog is clicked, may need to refresh counters more often
+    public boolean reduceCounter(long increment) {
         long time = counter.getTime();
         if (active) {
             if (time <= 0) {
                 time = 0;
                 if (reminderUseType) {  //for a repeating reminder, set up next alarm
-                    int newTime = scheduleNextAlarm(context);  //need return value for updating counter, if 0 can set active to false
+                    int newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
                     if (newTime == 0) { active = false; }
                     time = newTime;
                 } else {  //this is the case for a single use reminder
@@ -299,38 +277,39 @@ public class Reminder implements Parcelable {
     }
 
     //need an update method for the counter for when the app wakes from the background
-    public void updateCounter() {
+    public boolean updateCounter() {
+        boolean changed = false;
         Calendar calendar = Calendar.getInstance();
         if (active) {
-            long alarmTime = myAlarm.getAlarmTime();
             long currentTime = calendar.getTimeInMillis();
             if (alarmTime > currentTime) {
                 counter.setTime(alarmTime - currentTime);
             } else {
-                counter.setTime(0);
-                active = false;
+                changed = true;
             }
         }
-        //todo check this line to see if needed: reduceCounter(0);  //run this method to check for timers that have expired
+        return changed;
     }
 
+
     //set up next alarm based on the class settings
-    private int scheduleNextAlarm(Context alarmContext) {
-        //todo first calculate next time for today, then check if it is in time range, then check for next days
-        long currentTime = LocalTime.now().getMillisOfDay();
-        long alarmTime = currentTime + intFrequency;
+    private int scheduleNextAlarm() {
+        //first calculate next time for today, then check if it is in time range, then check for next days
+        LocalTime localTime = LocalTime.now();
+        LocalDate localDate = LocalDate.now();
+
+        long currentTime = localTime.getMillisOfDay();
+        long alarmNextTime = currentTime + intFrequency;
         long longTimeTo = localTimeTo.getMillisOfDay();
         long longTimeFrom = localTimeFrom.getMillisOfDay();
 
-        int tomorrow = LocalDate.now().getDayOfWeek() + 1;
+        int tomorrow = localDate.getDayOfWeek() + 1;
         if (tomorrow > 7) { tomorrow = 1; }
         boolean found = false;
         int daysFromToday = 0;
         int nextTime = 0;
 
-        if (!messageDays.isEmpty() && alarmTime <= longTimeTo && alarmTime >= longTimeFrom) { //check to see if next alarm is within time range
-            myAlarm = new MyAlarm(alarmContext, alarmId, intFrequency, messageId, reminder);
-            myAlarm.start();
+        if (!messageDays.isEmpty() && alarmNextTime <= longTimeTo && alarmNextTime >= longTimeFrom) { //check to see if next alarm is within time range
             nextTime = intFrequency;
         } else if (!messageDays.isEmpty()) {  //check for next day to run alarm
             for (int i = tomorrow; i < 8; i++) {
@@ -348,10 +327,9 @@ public class Reminder implements Parcelable {
             int currentMillis = time.getMillisOfDay();
 
             nextTime = (daysFromToday * 86400000) + localTimeFrom.getMillisOfDay() + intFrequency - currentMillis;
-            myAlarm = new MyAlarm(alarmContext, alarmId, nextTime, messageId, reminder);
-            myAlarm.start();
         }
-        //else, leave empty, will not schedule a next alarm
+        alarmTime = nextTime;
+        //else, leave nextTime as 0, will not schedule a next alarm
         return nextTime;
     }
 

@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.remindme" >
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -24,6 +27,13 @@
             android:label="Edit Days Activity"></activity>
         <activity android:name=".MyAlarmActivity"
             android:label="My Alarm Activity"></activity>
+        <activity android:name=".AlarmActivity"
+            android:label="Alarm Activity" ></activity>
+
+        <service android:name=".AlarmService"
+            android:enabled="true" ></service>
+
+        <receiver android:name=".AlarmReceiver" ></receiver>
 
     </application>
 

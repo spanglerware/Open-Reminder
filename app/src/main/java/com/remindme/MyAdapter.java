@@ -92,7 +92,6 @@ public class MyAdapter extends BaseAdapter {
             tvF.setBackgroundResource(R.drawable.border_style);
             tvR.setBackgroundResource(R.drawable.border_style);
         }
-
         return rowView;
     }
 
@@ -104,7 +103,7 @@ public class MyAdapter extends BaseAdapter {
         for (int i = 0; i < listSize; i++) {
             item = myItems.get(i);
             if (item.isActive()) {
-                if (item.reduceCounter(interval, myContext)) { complete = true; }
+                if (item.reduceCounter(interval)) { complete = true; }
             }
         }
         return complete;
