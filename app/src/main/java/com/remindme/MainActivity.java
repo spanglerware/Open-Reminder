@@ -59,12 +59,7 @@ public class MainActivity extends Activity {
     private long spinnerDbId;
     private int spinnerRow;
 
-    private ArrayList<MyAlarm> alarmArray;
-    private int alarmCounter;
     private static MainActivity inst;
-    private PowerManager.WakeLock wakeLock;
-
-
 
 
     //TODO display an alarm/notification screen/dialog if message fires while app is in background, currently stays in background

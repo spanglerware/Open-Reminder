@@ -29,25 +29,6 @@ public class AlarmService extends IntentService {
         return null;
     }
 
-/*
-    @SuppressWarnings("static-access")
-    @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
-        Context context = this.getApplicationContext();
-        alarmNotificationManager = (NotificationManager) context.getSystemService(context.NOTIFICATION_SERVICE);
-        Intent mIntent = new Intent(this, MainActivity.class);
-        pendingIntent = PendingIntent.getActivity(context, 0, mIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        builder.setContentTitle("Notes");
-        builder.setContentText("Take a break???");
-        builder.setSmallIcon(R.drawable.abc_ic_clear_mtrl_alpha);
-        builder.setContentIntent(pendingIntent);
-
-        alarmNotificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
-        alarmNotificationManager.notify(NOTIFICATION_ID, builder.build());
-    }
-*/
 
     @Override
     public void onHandleIntent(Intent intent) {

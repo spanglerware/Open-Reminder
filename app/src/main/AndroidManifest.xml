@@ -27,8 +27,6 @@
             android:label="Edit Days Activity"></activity>
         <activity android:name=".MyAlarmActivity"
             android:label="My Alarm Activity"></activity>
-        <activity android:name=".AlarmActivity"
-            android:label="Alarm Activity" ></activity>
 
         <service android:name=".AlarmService"
             android:enabled="true" ></service>
