@@ -10,6 +10,7 @@ import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 
 import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -20,6 +21,8 @@ import java.util.concurrent.TimeUnit;
  * Created by Scott on 4/26/2015.
  */
 public class Reminder implements Parcelable {  //implements parcelable so the data can be sent between activities
+    public static boolean mSelected;
+
     private long rowId;  //id of reminder in the database
     private int reminderId; //id of reminder that corresponds with position in dataArray
     private String reminder;
@@ -35,8 +38,9 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     private long alarmTime;  //this time is when the next alarm is set for
 
     private boolean active;
+    public boolean bSelected;
     private Time counter;
-    private static final String FORMAT = "%02d:%02d:%02d";
+    private static final String FORMAT = "%01dd %01d:%01d:%02d";
     private int intFrequency;
 
     LocalTime localTimeFrom;
@@ -52,6 +56,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         counter = new Time(intFrequency);
         messageDays = new ArrayList<Integer>();
         alarmTime = 0;
+        bSelected = false;
     }
 
     public int describeContents() {
@@ -136,14 +141,20 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public String getTimeFromAsString() {
         Time time = new Time(timeFrom);
-        return (time.toString()).substring(0,5);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mm a");
+        String timeValue = simpleDateFormat.format(time);
+        return timeValue;
+        //return (time.toString()).substring(0,5);
     }
 
     public long getTimeTo() { return timeTo; }
 
     public String getTimeToAsString() {
         Time time = new Time(timeTo);
-        return (time.toString()).substring(0,5);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mm a");
+        String timeValue = simpleDateFormat.format(time);
+        return timeValue;
+        //return (time.toString()).substring(0,5);
     }
 
     public boolean[] getDays() {
@@ -199,8 +210,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     }
 
     public void setTimes(String from, String to) {
-        String stringFrom = from + ":00";
-        String stringTo = to + ":00";
+        String stringFrom = from.substring(0, 4) + ":00";
+        String stringTo = to.substring(0, 4) + ":00";
 
         Time time = Time.valueOf(stringFrom);
         localTimeFrom = LocalTime.parse(stringFrom);
@@ -219,6 +230,9 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
             } else {
                 counter = new Time(intFrequency);
             }
+        } else {
+            // reset counter
+            counter.setTime(intFrequency);
         }
     }
 
@@ -242,13 +256,34 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         long time = counter.getTime();
         String strTimer;
         if (time == 0) {
-            strTimer = "Complete";
+            strTimer = "";
         } else {
             //todo will need to add days to strTimer
-            strTimer = ("" + String.format(FORMAT,
-                    TimeUnit.MILLISECONDS.toHours(time),
-                    TimeUnit.MILLISECONDS.toMinutes(time) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(time)),
-                    TimeUnit.MILLISECONDS.toSeconds(time) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time))));
+            long days = TimeUnit.MILLISECONDS.toDays(time);
+            long hours = TimeUnit.MILLISECONDS.toHours(time) -
+                    TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(time));
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(time) -
+                    TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(time));
+            long seconds = TimeUnit.MILLISECONDS.toSeconds(time) -
+                    TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time));
+            String format = "";
+            if (days > 0) {
+                format = "%01dd %02d:%02d:%02d";
+                strTimer = ("" + String.format(format, days, hours, minutes, seconds));
+//            } else if (hours >= 10) {
+//                format = "%02d:%02d:%02d";
+//                strTimer = ("" + String.format(format, hours, minutes, seconds));
+            } else if (hours > 0) {
+                format = "%01d:%02d:%02d";
+                strTimer = ("" + String.format(format, hours, minutes, seconds));
+            } else if (minutes >= 10) {
+                format = "%02d:%02d";
+                strTimer = ("" + String.format(format, minutes, seconds));
+            } else {
+                format = "%01d:%02d";
+                strTimer = ("" + String.format(format, minutes, seconds));
+            }
+
         }
         //Log.v("reminder counter", strTimer);
         return (strTimer);

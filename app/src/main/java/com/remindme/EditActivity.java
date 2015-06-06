@@ -8,6 +8,8 @@ import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v7.internal.widget.AdapterViewCompat;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -16,6 +18,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.RadioButton;
@@ -26,7 +29,10 @@ import android.widget.TextView;
 import android.widget.TimePicker;
 
 import java.sql.Time;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -41,74 +47,93 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
     private EditText etReminder;
     private TextView textViewFrequency;
-    private TextView textViewFrequencyHeader;
-    private TextView textViewSelectTimesHeader;
-    private TextView textViewCustomTimeFrom;
-    private TextView textViewCustomTimeTo;
-    private TextView textViewCustomDays;
 
-    private RadioButton radio9to5;
-    private RadioButton radioCustomTimes;
-    private RadioButton radioMF;
-    private RadioButton radioCustomDays;
-    private RadioButton radioSingleUse;
-    private RadioButton radioRecurring;
-    private RadioButton radioNotification;
-    private RadioButton radioAlarm;
     private Spinner spinnerSelectAlarm;
+
+    private boolean monday;
+    private boolean tuesday;
+    private boolean wednesday;
+    private boolean thursday;
+    private boolean friday;
+    private boolean saturday;
+    private boolean sunday;
+
+    private Button buttonMonday;
+    private Button buttonTuesday;
+    private Button buttonWednesday;
+    private Button buttonThursday;
+    private Button buttonFriday;
+    private Button buttonSaturday;
+    private Button buttonSunday;
+    private RangeSeekBar<Float> rangeBar;
 
     private ArrayList<String> alarms;
     private ArrayList<Integer> alarmsResId;
     private ArrayList<String> notifications;
-    private ArrayAdapter listAdapter;
 
-    private int tpdHourFrom;
-    private int tpdMinuteFrom;
-    private int tpdHourTo;
-    private int tpdMinuteTo;
     private int npMinute;
-    private boolean booleanTimeFrom;
     private int dialogFlag;
 
     private long editId;
     private boolean editReminder;
-    private Reminder reminder;
+    private Reminder mReminder;
+    private TextView tvTimeMin;
+    private TextView tvTimeMax;
 
-
-    //todo need to fix layout, user does not see buttons unless they scroll
 
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        this.setContentView(R.layout.activity_edit);
+        this.setContentView(R.layout.activity_edit_new);
+
+        initDayButtons();
+
+        rangeBar = new RangeSeekBar<Float>(this);
+        rangeBar.setRangeValues(0.0f, 24.0f);
+        rangeBar.setSelectedMinValue(9.0f);
+        rangeBar.setSelectedMaxValue(17.0f);
+        rangeBar.setPadding(10,0,10,0);
+
+        tvTimeMax = (TextView) findViewById(R.id.time_range_max);
+        tvTimeMin = (TextView) findViewById(R.id.time_range_min);
+
+        rangeBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Float>() {
+            @Override
+            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Float minValue, Float maxValue) {
+                int timeMinHours = (int) Math.floor(minValue);
+                int timeMaxHours = (int) Math.floor(maxValue);
+                int timeMinMinutes = (int) ((minValue - Math.floor(minValue)) * 60.0f);
+                int timeMaxMinutes = (int) ((maxValue - Math.floor(maxValue)) * 60.0f);
+
+                tvTimeMin.setText("From: " + String.valueOf(timeMinHours) + ":" + String.format("%02d", timeMinMinutes));
+                tvTimeMax.setText("To: " + String.valueOf(timeMaxHours) + ":" + String.format("%02d", timeMaxMinutes));
+                // handle changed range values
+//                Log.i(TAG, "User selected new date range: MIN=" + new Date(minValue) + ", MAX=" + new Date(maxValue));
+            }
+        });
+
+        ViewGroup container = (ViewGroup) findViewById(R.id.edit_container);
+        container.addView(rangeBar);
 
         //set local variables to interface objects
-        assignObjects();
+        //assignObjects();
 
         //load interface with data in case of an edit
         Intent intent = getIntent();
-        reminder = intent.getParcelableExtra("reminder");
+        mReminder = intent.getParcelableExtra("reminder");
 
-        if (reminder != null) { //todo this should now always be true
+        if (mReminder != null) { //todo this should now always be true
             editReminder = true;
-            loadEditData(intent);
+            loadEditData();
         } else {
             editReminder = false;
         }
 
-        loadNotificationList();
-        loadAlarmList();
+        //loadNotificationList();
+        //loadAlarmList();
 
-        if (radioAlarm.isChecked()) {
-            listAdapter = new ArrayAdapter(getBaseContext(), R.layout.alarm_layout, R.id.textViewMessage, alarms);
-        } else {
-            listAdapter = new ArrayAdapter(getBaseContext(), R.layout.alarm_layout, R.id.textViewMessage, notifications);
-        }
-        spinnerSelectAlarm.setAdapter(listAdapter);
-        spinnerSelectAlarm.setSelection(reminder.getMessageId());
-        registerSpinnerOnItemSelectedEvent();
-        setUsage();
         dialogFlag = 0;
+
     }
 
     private void loadAlarmList() {
@@ -150,200 +175,73 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     //todo register mediaplayer onCompletion listener then release the mediaplayer
 
     //todo redo the double playing time picker, not working correctly and can be confusing
-    private TimePickerDialog.OnTimeSetListener timeSetListener = new TimePickerDialog.OnTimeSetListener() {
-        public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
-        String timeFrom, timeTo;
-            dialogFlag++;
-            if (dialogFlag == 1) {
-                tpdHourFrom = hourOfDay;
-                tpdMinuteFrom = minute;
-            } else {
-                tpdHourTo = hourOfDay;
-                tpdMinuteTo = minute;
-                dialogFlag = 0;
-            }
+//
+//    private TimePickerDialog showTimePickerDialog(int hour, int minutes, boolean militaryTime, TimePickerDialog.OnTimeSetListener onTimeSetListener) {
+//        TimePickerDialog timePickerDialog = new TimePickerDialog(this, onTimeSetListener, hour, minutes, militaryTime);
+//        timePickerDialog.show();
+//        return timePickerDialog;
+//    }
 
-            timeFrom = ((tpdHourFrom > 9) ? "" + tpdHourFrom : "0" + tpdHourFrom) + ":" +
-                    ((tpdMinuteFrom > 9) ? "" + tpdMinuteFrom : "0" + tpdMinuteFrom);
-            timeTo = ((tpdHourTo > 9) ? "" + tpdHourTo : "0" + tpdHourTo) + ":" +
-                    ((tpdMinuteTo > 9) ? "" + tpdMinuteTo : "0" + tpdMinuteTo);
-            updateTimes(timeFrom, timeTo);
-        }
-    };
-
-    private TimePickerDialog showTimePickerDialog(int hour, int minutes, boolean militaryTime, TimePickerDialog.OnTimeSetListener onTimeSetListener) {
-        TimePickerDialog timePickerDialog = new TimePickerDialog(this, onTimeSetListener, hour, minutes, militaryTime);
-        timePickerDialog.show();
-        return timePickerDialog;
-    }
-
-    public void goChangeFrequency(View view) {
-        if (radioRecurring.isChecked()) {
-            showNumberPickerDialog();
-        } else {
-            //todo showTimePickerDialog(12,0,true,timeSetListener);
-        }
-    }
-
-    private void updateTimes(String timeFrom, String timeTo) {
-        if (timeFrom.equals("09:00") && timeTo.equals("17:00")) {
-            radio9to5.setChecked(true);
-        } else {
-            radioCustomTimes.setChecked(true);
-        }
-        textViewCustomTimeFrom.setText(timeFrom);
-        textViewCustomTimeTo.setText(timeTo);
-        reminder.setTimes(timeFrom, timeTo);
-    }
-
-    private void updateDays(String days) {
-        if (days.equals("M-F")) {
-            radioMF.setChecked(true);
-            textViewCustomDays.setText("Monday - Friday");
-        } else {
-            radioCustomDays.setChecked(true);
-            textViewCustomDays.setText(days);
-        }
-    }
 
     public void assignObjects() {
-        etReminder = (EditText) findViewById(R.id.editTextReminder);
-        textViewFrequency = (TextView) findViewById(R.id.editTextFrequency);
-        textViewFrequencyHeader = (TextView) findViewById(R.id.textViewFrequencyHeader);
-        textViewCustomDays = (TextView) findViewById(R.id.textViewCustomDays);
-        textViewSelectTimesHeader = (TextView) findViewById(R.id.textViewSelectTimesHeader);
-        textViewCustomTimeFrom = (TextView) findViewById(R.id.textViewCustomTimeFrom);
-        textViewCustomTimeTo = (TextView) findViewById(R.id.textViewCustomTimeTo);
-        radio9to5 = (RadioButton) findViewById(R.id.radio9To5);
-        radioCustomTimes = (RadioButton) findViewById(R.id.radioCustomTimes);
-        radioCustomDays = (RadioButton) findViewById(R.id.radioCustomDays);
-        radioMF = (RadioButton) findViewById(R.id.radioMF);
-        radioRecurring = (RadioButton) findViewById(R.id.radioRecurring);
-        radioSingleUse = (RadioButton) findViewById(R.id.radioSingleUse);
-        radioAlarm = (RadioButton) findViewById(R.id.radioAlarm);
-        radioNotification = (RadioButton) findViewById(R.id.radioNotification);
-        spinnerSelectAlarm = (Spinner) findViewById(R.id.spinnerSelectAlarm);
+        etReminder = (EditText) findViewById(R.id.edittext_reminder);
+        textViewFrequency = (TextView) findViewById(R.id.edittext_frequency);
+//        spinnerSelectAlarm = (Spinner) findViewById(R.id.spinnerSelectAlarm);
     }
 
     //load in data to edit from the Reminder sent to this activity
-    private void loadEditData(Intent intent) {
-        String days;
-        editId = reminder.getRowId();
+    private void loadEditData() {
+        boolean[] days = mReminder.getDays();
+        editId = mReminder.getRowId();
 
-        etReminder.setText(reminder.getReminder());
-        textViewFrequency.setText(reminder.getFrequency());
+        etReminder.setText(mReminder.getReminder());
+        textViewFrequency.setText(mReminder.getFrequency());
         textViewFrequency.requestFocus();
-        npMinute = reminder.getFrequencyMinutes();
+        npMinute = mReminder.getFrequencyMinutes();
 
-        days = reminder.getDaysAsString();
-        updateDays(days);
+        monday = days[0];
+        if (monday) { buttonMonday.setBackgroundResource(R.drawable.border_style_button_on); }
+        tuesday = days[1];
+        if (tuesday) { buttonTuesday.setBackgroundResource(R.drawable.border_style_button_on); }
+        wednesday = days[2];
+        if (wednesday) { buttonWednesday.setBackgroundResource(R.drawable.border_style_button_on); }
+        thursday = days[3];
+        if (thursday) { buttonThursday.setBackgroundResource(R.drawable.border_style_button_on); }
+        friday = days[4];
+        if (friday) { buttonFriday.setBackgroundResource(R.drawable.border_style_button_on); }
+        saturday = days[5];
+        if (saturday) { buttonSaturday.setBackgroundResource(R.drawable.border_style_button_on); }
+        sunday = days[6];
+        if (sunday) { buttonSunday.setBackgroundResource(R.drawable.border_style_button_on); }
 
-        if (reminder.getRecurring()) {
-            radioRecurring.setChecked(true);
+        if (mReminder.getRecurring()) {
             //setTimeRangeVisibility(true);
         } else {
-            radioSingleUse.setChecked(true);
             //setTimeRangeVisibility(false);
         }
-        updateTimes(reminder.getTimeFromAsString(), reminder.getTimeToAsString());
 
-        if (reminder.getNotificationType()) {
-            radioNotification.setChecked(true);
-        } else {
-            radioAlarm.setChecked(true);
-        }
+        //todo add range bar min and max selections
+        
 
         //end of loadEditData
     }
 
-    //return Cancelled code if cancel button selected
-    public void goCancel(View view) {
-        setResult(RESULT_CANCELED);
-        finish();
-    }
-
     //save information to database if save button selected
     public void goSaveReminder(View view) {
-        reminder.setReminder(etReminder.getText().toString());
-        reminder.setFrequency(textViewFrequency.getText().toString());
+        mReminder.setReminder(etReminder.getText().toString());
+        mReminder.setFrequency(textViewFrequency.getText().toString());
         //times are updated in updateTimes method
         //days are updated EditDaysActivity or in goSelectDays
-        reminder.setMisc(radioRecurring.isChecked(),radioNotification.isChecked(),
-                spinnerSelectAlarm.getSelectedItemPosition());
+        //reminder.setMisc(radioRecurring.isChecked(),radioNotification.isChecked(),
+//        spinnerSelectAlarm.getSelectedItemPosition());
 
         Intent data = getIntent();
-        data.putExtra("reminder",reminder);
+        data.putExtra("reminder", mReminder);
         setResult(RESULT_OK, data);
         finish();
 
         //end of goSaveReminder
     }
-
-    //todo allow entry of hours, minutes, seconds in frequency field, can set up three textbox layout, also could use timepicker widget
-
-
-    public void goSelectTimes(View view) {
-        switch (view.getId()) {
-            case R.id.radioCustomTimes:
-
-                //todo do something to show difference between dialogs, popup text or title change?
-                //todo set up formatting for am/pm
-                //todo enhance design of from and to in layout
-                //todo set time picker into custom dialog?
-                //todo validate time from not being later than time to
-                showTimePickerDialog(tpdHourFrom, tpdMinuteFrom, true, timeSetListener);
-                showTimePickerDialog(tpdHourTo, tpdMinuteTo, true, timeSetListener);
-                break;
-
-            case R.id.radio9To5:
-                tpdHourFrom = 9;
-                tpdMinuteFrom = 0;
-                tpdHourTo = 17;
-                tpdMinuteTo = 0;
-
-                updateTimes("09:00", "17:00");
-                break;
-        }
-    }
-
-    public void goSelectDays(View view) {
-        switch (view.getId()) {
-            case R.id.radioMF:
-                updateDays("M-F");
-                reminder.setDays(true, true, true, true, true, false, false);
-                break;
-            case R.id.radioCustomDays:
-                Intent intent = new Intent(this, EditDaysActivity.class);
-                intent.putExtra("reminder", reminder);
-                startActivityForResult(intent, REQUEST_EDIT);
-                //showDaysDialog();
-                break;
-        }
-    }
-
-    private void showDaysDialog() {
-        final Dialog dialog = new Dialog(this);
-        dialog.setTitle("Select Days");
-        dialog.setContentView(R.layout.activity_select_days);
-        Button buttonOK = (Button) dialog.findViewById(R.id.buttonDaysOK);
-        Button buttonCancel = (Button) dialog.findViewById(R.id.buttonDaysCancel);
-
-        buttonOK.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        buttonCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-
-        dialog.show();
-    }
-
 
     @Override
     public void onValueChange(NumberPicker numberPicker, int oldValue, int newValue) {
@@ -397,69 +295,86 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         dialog.show();
     }
 
-    public void goSelectUsage(View view) {
-        setUsage();
+    private void initDayButtons() {
+        monday = false;
+        tuesday = false;
+        wednesday = false;
+        thursday = false;
+        friday = false;
+        saturday = false;
+        sunday = false;
+
+        buttonMonday = (Button) findViewById(R.id.toggle_monday);
+        buttonTuesday = (Button) findViewById(R.id.toggle_tuesday);
+        buttonWednesday = (Button) findViewById(R.id.toggle_wednesday);
+        buttonThursday = (Button) findViewById(R.id.toggle_thursday);
+        buttonFriday = (Button) findViewById(R.id.toggle_friday);
+        buttonSaturday = (Button) findViewById(R.id.toggle_saturday);
+        buttonSunday = (Button) findViewById(R.id.toggle_sunday);
     }
 
-    private void setUsage() {
-        if (radioSingleUse.isChecked()) {
-            //setTimeRangeVisibility(false);
-            textViewFrequencyHeader.setText("Notification Time");
+    public void goToggleMonday(View view) {
+        if (monday) {
+            buttonMonday.setBackgroundResource(R.drawable.border_style);
         } else {
-            //setTimeRangeVisibility(true);
-            textViewFrequencyHeader.setText("Notification Frequency");
+            buttonMonday.setBackgroundResource(R.drawable.border_style_button_on);
         }
-
+        monday = !monday;
     }
 
-    public void goSelectMsgType(View view) {
-        listAdapter.clear();
-        switch (view.getId()) {
-            //populate spinner with Notification types list
-            case R.id.radioNotification:
-                listAdapter.addAll(notifications);
-                break;
-            //populate spinner with Alarm sounds list
-            case R.id.radioAlarm:
-                listAdapter.addAll(alarms);
-                break;
-        }
-        listAdapter.notifyDataSetChanged();
-    }
-
-
-    private void setTimeRangeVisibility(boolean visible) {
-        //todo try again to dynamically set margins
-        //ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) textViewSelectDaysHeader.getLayoutParams();
-
-        int visibility;
-        if (visible) {
-            visibility = View.VISIBLE;
-            //marginLayoutParams.topMargin = 220;
+    public void goToggleTuesday(View view) {
+        if (tuesday) {
+            buttonTuesday.setBackgroundResource(R.drawable.border_style);
         } else {
-            visibility = View.GONE;
-            //marginLayoutParams.topMargin = 100;
+            buttonTuesday.setBackgroundResource(R.drawable.border_style_button_on);
         }
-        //textViewSelectDaysHeader.setLayoutParams(marginLayoutParams);
-
-        textViewSelectTimesHeader.setVisibility(visibility);
-        textViewCustomTimeFrom.setVisibility(visibility);
-        textViewCustomTimeTo.setVisibility(visibility);
-        radio9to5.setVisibility(visibility);
-        radioCustomTimes.setVisibility(visibility);
+        tuesday = !tuesday;
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode,resultCode,this.getIntent());
-
-        if (resultCode == Activity.RESULT_OK) {
-            reminder = data.getParcelableExtra("reminder");
-            updateDays(reminder.getDaysAsString());
+    public void goToggleWednesday(View view) {
+        if (wednesday) {
+            buttonWednesday.setBackgroundResource(R.drawable.border_style);
+        } else {
+            buttonWednesday.setBackgroundResource(R.drawable.border_style_button_on);
         }
+        wednesday = !wednesday;
     }
 
+    public void goToggleThursday(View view) {
+        if (thursday) {
+            buttonThursday.setBackgroundResource(R.drawable.border_style);
+        } else {
+            buttonThursday.setBackgroundResource(R.drawable.border_style_button_on);
+        }
+        thursday = !thursday;
+    }
 
+    public void goToggleFriday(View view) {
+        if (friday) {
+            buttonFriday.setBackgroundResource(R.drawable.border_style);
+        } else {
+            buttonFriday.setBackgroundResource(R.drawable.border_style_button_on);
+        }
+        friday = !friday;
+    }
+
+    public void goToggleSaturday(View view) {
+        if (saturday) {
+            buttonSaturday.setBackgroundResource(R.drawable.border_style);
+        } else {
+            buttonSaturday.setBackgroundResource(R.drawable.border_style_button_on);
+        }
+        saturday = !saturday;
+    }
+
+    public void goToggleSunday(View view) {
+        if (sunday) {
+            buttonSunday.setBackgroundResource(R.drawable.border_style);
+        } else {
+            buttonSunday.setBackgroundResource(R.drawable.border_style_button_on);
+        }
+        sunday = !sunday;
+    }
 
 
     //end of Edit Activity

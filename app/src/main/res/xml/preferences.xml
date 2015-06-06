@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference android:title="Reminder"
+        android:key="reminder"
+        android:summary="Please enter a new reminder" />
+    <EditTextPreference android:title="Frequency"
+        android:key="frequency"
+        android:summary="Please enter a frequency" />
+    <CheckBoxPreference android:title="Repeating"
+        android:defaultValue="false"
+        android:summary="This option causes the reminder to repeat until stopped"
+        android:key="recurring" />
+    <ListPreference android:title="Alarm Sound"
+        android:summary="Select the alarm sound"
+        android:key="alarmSound"
+        android:defaultValue="1"
+        android:entries="@array/alarmList"
+        android:entryValues="@array/alarmValues" />
+
+    <PreferenceScreen
+        android:summary="Multi list"
+        android:title="Multi Test">
+        <PreferenceCategory android:title="Select options">
+        <MultiSelectListPreference android:title="Reminder Days"
+            android:summary="Select the days for reminders to occur on"
+            android:key="days"
+            android:entries="@array/daysList"
+            android:entryValues="@array/daysValues"
+            android:defaultValue="@array/empty_array"
+            />
+        </PreferenceCategory>
+    </PreferenceScreen>
+
+</PreferenceScreen>

@@ -1,5 +1,6 @@
 package com.remindme;
 
+import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -21,10 +22,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -39,7 +42,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-public class MainActivity extends Activity {
+public class MainActivity extends ActionBarActivity {
 
     private static final int REQUEST_NEW = 0;
     private static final int REQUEST_EDIT = 1;
@@ -47,8 +50,10 @@ public class MainActivity extends Activity {
     private DatabaseUtil myDb;
 
     private boolean bStarted;
+    private boolean bSelected;
+
     private Button btnStart;
-    private Spinner spinner;
+    public ListView spinner;
 
     ArrayList<Reminder> dataArray;
     MyAdapter myAdapter;
@@ -102,18 +107,52 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
-        setContentView(R.layout.activity_main_alt);
+        setContentView(R.layout.activity_main);
 
         openDB();
 
         bStarted = false;
-        btnStart = (Button) findViewById(R.id.buttonStart);
+        bSelected = false;
+        //btnStart = (Button) findViewById(R.id.buttonStart);
 
         fillDataArray();
         addItemsToSpinner();
-        registerSpinnerSelectionEvent();
-        registerSpinnerOnTouchEvent();
+        //registerSpinnerOnTouchEvent();
         callHandler();
+
+        spinner.setItemsCanFocus(true);
+        spinner.setOnItemClickListener(new ListView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                MyAdapter.TestViewHolder viewHolder = (MyAdapter.TestViewHolder) view.getTag();
+                int selected = MyAdapter.selectedId;
+
+                //set visibility of child views to expand or contract selection
+                if (selected == position) {
+                    viewHolder.llSecondary.setVisibility(View.GONE);
+                    viewHolder.llAll.setBackgroundResource(R.color.transparent);
+//                    viewHolder.llAll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+                    MyAdapter.selectedId = -1;
+                } else if (selected == -1) {
+                    viewHolder.llSecondary.setVisibility(View.VISIBLE);
+                    viewHolder.llAll.setBackgroundResource(R.color.light_grey);
+//                    viewHolder.llAll.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+                    MyAdapter.selectedId = position;
+                } else {
+                    //close previous selection then open new one
+                    View viewPrevious = parent.getChildAt(selected);
+                    MyAdapter.TestViewHolder vhPrevious = (MyAdapter.TestViewHolder) viewPrevious.getTag();
+                    vhPrevious.llSecondary.setVisibility(View.GONE);
+                    vhPrevious.llAll.setBackgroundResource(R.color.transparent);
+//                    vhPrevious.llAll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
+                    viewHolder.llSecondary.setVisibility(View.VISIBLE);
+                    viewHolder.llAll.setBackgroundResource(R.color.light_grey);
+//                    viewHolder.llAll.setDescendantFocusability(ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+                    MyAdapter.selectedId = position;
+                }
+
+            }
+        });
 
 
         //end of MainActivity onCreate
@@ -254,11 +293,11 @@ public class MainActivity extends Activity {
             }
         }
         //set up the custom adapter
-        myAdapter = new MyAdapter(this, dataArray);
+        spinner = (ListView) findViewById(R.id.listview_reminder);
+        myAdapter = new MyAdapter(getApplicationContext(), dataArray, spinner);
     }
 
     private void addItemsToSpinner() {
-        spinner = (Spinner) findViewById(R.id.spinner);
         spinner.setAdapter(myAdapter);
         spinner.setSelection(spinnerRow);
     }
@@ -295,16 +334,17 @@ public class MainActivity extends Activity {
     //send a Reminder to the Edit Activity
     public void goEditReminder(View view) {
         //todo may need to stop an active reminder before sending to edit
-        Intent intent = new Intent(this, EditActivity.class);
-        intent.putExtra("reminder",dataArray.get(spinnerRow));
-        startActivityForResult(intent, REQUEST_EDIT);
+//        Intent intent = new Intent(this, EditActivity.class);
+//        intent.putExtra("reminder",dataArray.get(spinnerRow));
+//        startActivityForResult(intent, REQUEST_EDIT);
     }
 
     //create a new blank reminder and send it to Edit Activity
     public void goNewReminder(View view) {
-        Intent intent = new Intent(this, EditActivity.class);
+        Intent intent = new Intent(this, MyPreferenceActivity.class);
+        startActivity(intent);
+/*
         long rowId = myDb.createNewEntry();
-
         Reminder reminder = new Reminder("","0",rowId);
         reminder.setDays(false,false,false,false,false,false,false);
         reminder.setTimes("09:00", "17:00");
@@ -313,6 +353,7 @@ public class MainActivity extends Activity {
 
         intent.putExtra("reminder", reminder);
         startActivityForResult(intent, REQUEST_NEW);
+*/
     }
 
     @Override
@@ -343,23 +384,23 @@ public class MainActivity extends Activity {
 
         //todo may want to move some of these statements to after if conditions
 
-        if (bStarted) {
-            if (reminder.getNotificationType()) {
-                //todo move out of if
-                cancelReminder(reminder);
-            } else {
-                cancelReminder(reminder);
-            }
-        } else {
-            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
-            if (reminder.getNotificationType()) {
-                //todo move out of if
-                startReminder(reminder);
-            } else {
-                startReminder(reminder);
-            }
-        }
-        myAdapter.notifyDataSetChanged();
+//        if (bStarted) {
+//            if (reminder.getNotificationType()) {
+//                //todo move out of if
+//                cancelReminder(reminder);
+//            } else {
+//                cancelReminder(reminder);
+//            }
+//        } else {
+//            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
+//            if (reminder.getNotificationType()) {
+//                //todo move out of if
+//                startReminder(reminder);
+//            } else {
+//                startReminder(reminder);
+//            }
+//        }
+//        myAdapter.notifyDataSetChanged();
 
         //todo wait does not work, need to capture current time, store it, cancel button, then restart with stored value
     }
@@ -397,6 +438,7 @@ public class MainActivity extends Activity {
 
 
     private void setButtonImage(boolean toStart) {
+/*
         if (toStart) {
             btnStart.setText("Start");
             btnStart.setTextColor(Color.parseColor("#009400"));
@@ -406,7 +448,10 @@ public class MainActivity extends Activity {
             btnStart.setTextColor(Color.RED);
             btnStart.setBackgroundResource(R.drawable.button_stop);
         }
+*/
     }
+
+
 
     private void registerSpinnerSelectionEvent() {
         xDown = 0;
@@ -429,6 +474,24 @@ public class MainActivity extends Activity {
                     bStarted = false;
                     setButtonImage(true);
                 }
+
+                MyAdapter.TestViewHolder viewHolder = (MyAdapter.TestViewHolder) viewSelected.getTag();
+
+                //set visibility of child views to expand or contract selection
+                if (!bSelected) {
+                    viewHolder.tvHolderNotType.setVisibility(View.VISIBLE);
+                    viewHolder.tvHolderTimes.setVisibility(View.VISIBLE);
+                    viewHolder.tvHolderDays.setVisibility(View.VISIBLE);
+                    viewHolder.tvHolderFrequency.setVisibility(View.VISIBLE);
+
+                } else {
+                    viewHolder.tvHolderNotType.setVisibility(View.GONE);
+                    viewHolder.tvHolderTimes.setVisibility(View.GONE);
+                    viewHolder.tvHolderDays.setVisibility(View.GONE);
+                    viewHolder.tvHolderFrequency.setVisibility(View.GONE);
+
+                }
+                bSelected = !bSelected;
 
                 //todo still need current field? if so need to update as below
                 myDb.changeCurrent(spinnerDbId);

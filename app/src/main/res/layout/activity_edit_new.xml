@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/edit_container"
+    android:orientation="vertical"
+    android:paddingLeft="10dp"
+    android:paddingRight="10dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/edittext_reminder"
+        android:hint="Enter Reminder"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="20dp"
+        />
+
+    <EditText
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/edittext_frequency"
+        android:hint="Select Time Interval"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_marginBottom="30dp"
+        android:layout_marginTop="20dp"
+        />
+
+    <CheckBox
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/checkbox_repeat"
+        android:text="Repeat?"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_marginBottom="30dp"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Days"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_marginBottom="5dp"
+        />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="30dp">
+
+        <Button
+            android:id="@+id/toggle_monday"
+            android:text="Mo"
+            android:onClick="goToggleMonday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_tuesday"
+            android:text="Tu"
+            android:onClick="goToggleTuesday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_wednesday"
+            android:text="We"
+            android:onClick="goToggleWednesday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_thursday"
+            android:text="Th"
+            android:onClick="goToggleThursday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_friday"
+            android:text="Fr"
+            android:onClick="goToggleFriday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_saturday"
+            android:text="Sa"
+            android:onClick="goToggleSaturday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/toggle_sunday"
+            android:text="Su"
+            android:onClick="goToggleSunday"
+            android:layout_weight="1"
+            android:background="@drawable/border_style_button_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Select Time Range"
+        android:textAppearance="?android:textAppearanceLarge"
+        android:layout_marginBottom="5dp"
+        />
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/time_range_min"
+            android:hint="Range From"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:id="@+id/time_range_max"
+            android:hint="Range To"
+            android:layout_weight="1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+</LinearLayout>

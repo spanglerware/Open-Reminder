@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Layout for weather forecast list item for future day (not today) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/container_all"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:descendantFocusability="blocksDescendants"
+    android:gravity="center_vertical"
+    android:minHeight="?android:attr/listPreferredItemHeight"
+    android:background="@drawable/list_selector"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:id="@+id/container_primary"
+        android:layout_height="wrap_content"
+        android:layout_width="fill_parent"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="20dp"
+        android:animateLayoutChanges="true"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Text"
+            android:id="@+id/list_item_reminder_id"
+            android:paddingLeft="30dp"
+            android:textColor="@android:color/black"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/list_item_reminder_text"
+            android:text="New Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:paddingLeft="30dp"
+            android:layout_weight="3"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge" />
+
+        <TextView
+            android:id="@+id/list_item_reminder_counter"
+            android:text="New Text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="right"
+            android:paddingRight="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condensed"/>
+            <!--android:textAppearance="?android:textAppearanceLarge"-->
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/container_secondary"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginBottom="4dp"
+        android:animateLayoutChanges="true"
+        android:visibility="gone"
+        android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/container_secondary_textviews"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginBottom="4dp"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/list_item_reminder_frequency"
+                android:text="New Text"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:paddingLeft="30dp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_marginBottom="6dp"
+                android:textAppearance="?android:textAppearanceSmall"/>
+
+            <TextView
+                android:id="@+id/list_item_reminder_days"
+                android:text="New Text"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:paddingLeft="30dp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_marginBottom="6dp"
+                android:textAppearance="?android:textAppearanceSmall"/>
+
+            <TextView
+                android:id="@+id/list_item_reminder_notification_type"
+                android:text="New Text"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:paddingLeft="30dp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_marginBottom="6dp"
+                android:textAppearance="?android:textAppearanceSmall"/>
+
+            <TextView
+                android:id="@+id/list_item_reminder_times"
+                android:text="New Text"
+                android:layout_width="wrap_content"
+                android:layout_height="fill_parent"
+                android:layout_weight="1"
+                android:paddingLeft="30dp"
+                android:fontFamily="sans-serif-condensed"
+                android:layout_marginBottom="6dp"
+                android:textAppearance="?android:textAppearanceSmall"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/container_buttons"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="3"
+            android:animateLayoutChanges="true"
+            android:layout_marginBottom="16dp"
+            android:orientation="vertical">
+
+            <!--<Button-->
+                <!--android:layout_width="30dp"-->
+                <!--android:layout_height="60dp"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="Start"-->
+                <!--android:id="@+id/button_ghost_1"-->
+                <!--android:layout_gravity="left"-->
+                <!--android:onClick="goStartReminder"-->
+                <!--android:visibility="invisible"-->
+                <!--style="@style/button_green" />-->
+
+            <Button
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Start"
+                android:id="@+id/button_start"
+                android:layout_gravity="right"
+                android:onClick="goStartReminder"
+                android:fontFamily="sans-serif-condensed"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:layout_marginBottom="6dp"
+                android:layout_marginEnd="20dp"
+                style="@style/button_green" />
+
+            <!--<Button-->
+                <!--android:layout_width="60dp"-->
+                <!--android:layout_height="60dp"-->
+                <!--android:layout_weight="20"-->
+                <!--android:text="Start"-->
+                <!--android:id="@+id/button_ghost_2"-->
+                <!--android:layout_gravity="left"-->
+                <!--android:onClick="goStartReminder"-->
+                <!--android:visibility="invisible"-->
+                <!--style="@style/button_green" />-->
+    <!-- -->
+
+            <Button
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:text="Edit"
+                android:id="@+id/button_edit"
+                android:layout_gravity="right"
+                android:onClick="goEditReminder"
+                android:fontFamily="sans-serif-condensed"
+                android:textAppearance="?android:textAppearanceSmall"
+                android:layout_marginEnd="20dp"
+                style="@style/button" />
+
+            <!--<Button-->
+                <!--android:layout_width="30dp"-->
+                <!--android:layout_height="60dp"-->
+                <!--android:layout_weight="1"-->
+                <!--android:text="Start"-->
+                <!--android:id="@+id/button_ghost_3"-->
+                <!--android:layout_gravity="left"-->
+                <!--android:onClick="goStartReminder"-->
+                <!--android:visibility="invisible"-->
+                <!--style="@style/button_green" />-->
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

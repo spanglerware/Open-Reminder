@@ -57,9 +57,9 @@ public class AlarmService extends IntentService {
         .setContentText(msg);
 
         alarmNotificationBuilder.setContentIntent(contentIntent);
-        //alarmNotificationManager.notify(1, alarmNotificationBuilder.build());
+        alarmNotificationManager.notify(1, alarmNotificationBuilder.build());
 
-        startActivity(alarmIntent);
+        //startActivity(alarmIntent);
         Log.d("AlarmService", "Notification sent.");
 
 //        AlarmReceiver.completeWakefulIntent(intent);

@@ -185,11 +185,15 @@ public class DatabaseUtil {
 	//retrieve all the data in the main table
 	public Cursor getAllRows() {
 		Cursor cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
-		if (cursor.getCount() > 0) {
-			cursor.moveToFirst();
+		if (cursor.getCount() == 1) {
+            insertRow("Walk the Dog", "5", Time.valueOf("09:00:00"), Time.valueOf("17:00:00"), true, true, true, false, false, true, true, true, true, 0);
+            cursor.moveToFirst();
+        } else if (cursor.getCount() > 1) {
+            cursor.moveToFirst();
 		} else {
             //todo need to fix the time inputs, they generate values of 0
             insertRow("Take a Break!","5",Time.valueOf("09:00:00"),Time.valueOf("17:00:00"),true,true,true,false,false,true,true,true,true,0);
+            insertRow("Walk the Dog","5",Time.valueOf("09:00:00"),Time.valueOf("17:00:00"),true,true,true,false,false,true,true,true,true,0);
             cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
         }
 		return cursor;
