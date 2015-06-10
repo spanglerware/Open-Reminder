@@ -1,6 +1,7 @@
 package com.remindme;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -41,7 +42,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public boolean bSelected;
     private Time counter;
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
-    private int intFrequency;
+    private int intFrequency; //frequency in milliseconds
 
     LocalTime localTimeFrom;
     LocalTime localTimeTo;
@@ -50,7 +51,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public Reminder (String rem, String freq, long id) {
         reminder = rem;
         frequency = freq;
-        intFrequency = Integer.parseInt(frequency) * 60000;
+        intFrequency = Integer.parseInt(frequency);
         rowId = id;
         active = false;
         counter = new Time(intFrequency);
@@ -133,6 +134,20 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public String getFrequency() { return frequency; }
 
+    public String getFormattedFrequency() {
+        int hours, minutes, seconds;
+        hours = intFrequency / (60 * 60 * 1000);
+        minutes = (intFrequency % (60 * 60 * 1000)) / (60 * 1000);
+        seconds = ((intFrequency % (60 * 60 * 1000)) % (60 * 1000) / 1000);
+
+        String formattedFreq = "";
+        if (hours != 0) { formattedFreq = String.valueOf(hours) + ":"; }
+        formattedFreq += String.format("%02d:%02d",
+                minutes, seconds);
+
+        return formattedFreq;
+    }
+
     public int getIntFrequency() { return intFrequency; }
 
     public int getFrequencyMinutes() { return (intFrequency / 60000); }
@@ -186,7 +201,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public void setLongFrequency(int intFreq) {
         intFrequency = intFreq;
-        frequency = String.valueOf(TimeUnit.MILLISECONDS.toMinutes(intFreq));
+        frequency = String.valueOf(intFreq);
     }
 
     public void setDays(boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
@@ -406,6 +421,53 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         return stringDays;
     }
 
+    public void update(Context context, boolean editedReminder){
+        DatabaseUtil db = new DatabaseUtil(context);
+        db.open();
+        db.updateRow(this);
+        db.close();
+        counter = new Time(intFrequency);
+        if (editedReminder) {
+            SingletonDataArray.getInstance().updateReminder(this);
+        } else {
+            SingletonDataArray.getInstance().addReminder(this);
+        }
+    }
 
-    //end of Reminder class
-}
+    public void reload(Context context) {
+        DatabaseUtil db = new DatabaseUtil(context);
+        db.open();
+        Cursor cursor = db.getRow(reminderId);
+        if (cursor.getCount() > 0) {
+            cursor.moveToFirst();
+        } else {
+            return;
+        }
+
+        frequency = cursor.getString(DatabaseUtil.COLUMN_FREQUENCY);
+        reminder = cursor.getString(DatabaseUtil.COLUMN_REMINDER);
+
+        monday = cursor.getInt(DatabaseUtil.COLUMN_MONDAY) > 0;
+        tuesday = cursor.getInt(DatabaseUtil.COLUMN_TUESDAY) > 0;
+        wednesday = cursor.getInt(DatabaseUtil.COLUMN_WEDNESDAY) > 0;
+        thursday = cursor.getInt(DatabaseUtil.COLUMN_THURSDAY) > 0;
+        friday = cursor.getInt(DatabaseUtil.COLUMN_FRIDAY) > 0;
+        saturday = cursor.getInt(DatabaseUtil.COLUMN_SATURDAY) > 0;
+        sunday = cursor.getInt(DatabaseUtil.COLUMN_SUNDAY) > 0;
+
+        Time time;
+        time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_FROM));
+        timeFrom = time.getTime();
+        time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_TO));
+        timeTo = time.getTime();
+
+        reminderUseType = cursor.getInt(DatabaseUtil.COLUMN_RECURRING) > 0;
+        notificationType = cursor.getInt(DatabaseUtil.COLUMN_NOTIFICATION_TYPE) > 0;
+        messageId = cursor.getInt(DatabaseUtil.COLUMN_MESSAGE);
+
+        db.close();
+    }
+
+
+
+}   //end of Reminder class

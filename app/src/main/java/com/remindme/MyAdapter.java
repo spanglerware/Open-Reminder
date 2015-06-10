@@ -57,11 +57,11 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
 //todo use constructor for multiple TVs
-    public MyAdapter(Context context, final ArrayList<Reminder> data, ListView listView) {
+    public MyAdapter(Context context, ListView listView) {
         super();
         //super(context, data, resource, from, to);
         layoutInflater = LayoutInflater.from(context);
-        mItems = data;
+        mItems = SingletonDataArray.getInstance().getDataArray();
         mContext = context;
         counterMap = new HashMap<Integer,TextView>();
         mListView = listView;
@@ -138,7 +138,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         tvRow.setText(String.valueOf(item.getRowId()));
         tvR.setText(item.getReminder());
         tvC.setText(item.getCounterAsString());
-        tvF.setText("Frequency: " + item.getFrequency());
+        tvF.setText("Frequency: " + item.getFormattedFrequency());
         tvD.setText("Days: " + item.getDaysAsString());
         tvT.setText("Time: " + item.getTimeFromAsString() + " - " + item.getTimeToAsString());
         tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
@@ -201,9 +201,12 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         public void onClick(View view) {
             final int position = mListView.getPositionForView((View) view.getParent());
             Intent intent = new Intent(view.getContext(), EditActivity.class);
-            intent.putExtra("reminder", mItems.get(position));
+            Reminder reminder = mItems.get(position);
+            reminder.setActive(false);
+            intent.putExtra("reminder", reminder);
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             view.getContext().startActivity(intent);
+            //todo update mItems with new information, then refresh display
         }
     };
 

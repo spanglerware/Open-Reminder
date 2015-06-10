@@ -28,8 +28,6 @@
             android:label="Edit Days Activity"></activity>
         <activity android:name=".MyAlarmActivity"
             android:label="My Alarm Activity"></activity>
-        <activity android:name=".MyPreferenceActivity"
-            android:label="Preference Activity"></activity>
 
         <service android:name=".AlarmService"
             android:enabled="true" ></service>

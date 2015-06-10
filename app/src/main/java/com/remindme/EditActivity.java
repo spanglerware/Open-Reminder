@@ -1,15 +1,21 @@
 package com.remindme;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.v7.internal.widget.AdapterViewCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -39,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Scott on 4/18/2015.
  */
-
 
 public class EditActivity extends Activity implements NumberPicker.OnValueChangeListener {
     private static final int REQUEST_NEW = 0;
@@ -71,7 +76,9 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private ArrayList<Integer> alarmsResId;
     private ArrayList<String> notifications;
 
+    private int npHour;
     private int npMinute;
+    private int npSecond;
     private int dialogFlag;
 
     private long editId;
@@ -86,8 +93,10 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         super.onCreate(bundle);
         this.setContentView(R.layout.activity_edit_new);
 
+        //todo move to assignObjects method
         initDayButtons();
 
+        //todo move to assignObjects method, use stored values
         rangeBar = new RangeSeekBar<Float>(this);
         rangeBar.setRangeValues(0.0f, 24.0f);
         rangeBar.setSelectedMinValue(9.0f);
@@ -114,9 +123,8 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         ViewGroup container = (ViewGroup) findViewById(R.id.edit_container);
         container.addView(rangeBar);
-
         //set local variables to interface objects
-        //assignObjects();
+        assignObjects();
 
         //load interface with data in case of an edit
         Intent intent = getIntent();
@@ -127,6 +135,8 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             loadEditData();
         } else {
             editReminder = false;
+            int arrayId = intent.getIntExtra("arrayId", -1);
+            createNewReminder(arrayId);
         }
 
         //loadNotificationList();
@@ -134,7 +144,16 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         dialogFlag = 0;
 
+    }  //end of 0nCreate
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mReminder.setReminder(etReminder.getText().toString());
+        mReminder.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
+        mReminder.update(this, editReminder);
     }
+
 
     private void loadAlarmList() {
         alarms = new ArrayList<String>();
@@ -174,13 +193,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
     //todo register mediaplayer onCompletion listener then release the mediaplayer
 
-    //todo redo the double playing time picker, not working correctly and can be confusing
-//
-//    private TimePickerDialog showTimePickerDialog(int hour, int minutes, boolean militaryTime, TimePickerDialog.OnTimeSetListener onTimeSetListener) {
-//        TimePickerDialog timePickerDialog = new TimePickerDialog(this, onTimeSetListener, hour, minutes, militaryTime);
-//        timePickerDialog.show();
-//        return timePickerDialog;
-//    }
 
 
     public void assignObjects() {
@@ -191,13 +203,22 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
     //load in data to edit from the Reminder sent to this activity
     private void loadEditData() {
+        int frequency;
+
         boolean[] days = mReminder.getDays();
         editId = mReminder.getRowId();
 
         etReminder.setText(mReminder.getReminder());
-        textViewFrequency.setText(mReminder.getFrequency());
+        textViewFrequency.setText("Interval: " + mReminder.getFormattedFrequency());
         textViewFrequency.requestFocus();
-        npMinute = mReminder.getFrequencyMinutes();
+
+        frequency = mReminder.getIntFrequency();
+        npHour = frequency / (60 * 60 * 1000);
+        if (npHour > 0) { frequency -= npHour * 60 * 60 * 1000; }
+        npMinute = frequency / (60 * 1000);
+        if (npMinute > 0) { frequency -= npMinute * 60 * 1000; }
+        npSecond = frequency / 1000;
+        Log.v("Edit Activity", "Hour: " + npHour + ", Minute: " + npMinute + ", Second: " + npSecond);
 
         monday = days[0];
         if (monday) { buttonMonday.setBackgroundResource(R.drawable.border_style_button_on); }
@@ -220,11 +241,21 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             //setTimeRangeVisibility(false);
         }
 
-        //todo add range bar min and max selections
-        
+    } //end of loadEditData
 
-        //end of loadEditData
+    private void createNewReminder(int arrayId) {
+        DatabaseUtil db = new DatabaseUtil(this);
+        db.open();
+        long reminderId = db.insertRow("", "0", new Time(0), new Time(0), false, false, false, false,
+                false, false, false, false, false, 0);
+        mReminder = new Reminder("", "0", reminderId);
+        mReminder.setReminderId(arrayId);
+        mReminder.setTimes(0, 0);
+        mReminder.setDays(false, false, false, false, false, false, false);
+        mReminder.setMisc(false, false, 0);
+        db.close();
     }
+
 
     //save information to database if save button selected
     public void goSaveReminder(View view) {
@@ -247,8 +278,14 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     public void onValueChange(NumberPicker numberPicker, int oldValue, int newValue) {
         //update reminder and textview with new values
         switch (numberPicker.getId()) {
-            case R.id.numberPickerMinute:
+            case R.id.number_picker_hours:
+                npHour = newValue;
+                break;
+            case R.id.number_picker_minutes:
                 npMinute = newValue;
+                break;
+            case R.id.number_picker_seconds:
+                npSecond = newValue;
                 break;
         }
     }
@@ -261,38 +298,77 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     }
 
     private void showNumberPickerDialog() {
-        final Dialog dialog = new Dialog(EditActivity.this);
-        dialog.setTitle("Select Time");
-        dialog.setContentView(R.layout.dialog_frequency_layout);
-        Button buttonOK = (Button) dialog.findViewById(R.id.buttonFreqOK);
-        Button buttonCancel = (Button) dialog.findViewById(R.id.buttonFreqCancel);
-        final NumberPicker numberPickerMinute = (NumberPicker) dialog.findViewById(R.id.numberPickerMinute);
-        numberPickerMinute.setMaxValue(720);
-        numberPickerMinute.setWrapSelectorWheel(false);
-        numberPickerMinute.setOnValueChangedListener(this);
-        numberPickerMinute.setValue(npMinute);
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.activity_select_time, null);
 
-        buttonOK.setOnClickListener(new View.OnClickListener() {
+        final AlertDialog.Builder dialog = new AlertDialog.Builder(EditActivity.this);
+        dialog.setTitle("Select Time Interval");
+        final NumberPicker numberPickerHours = (NumberPicker) dialogView.findViewById(
+                R.id.number_picker_hours);
+        final NumberPicker numberPickerMinutes = (NumberPicker) dialogView.findViewById(
+                R.id.number_picker_minutes);
+        final NumberPicker numberPickerSeconds = (NumberPicker) dialogView.findViewById(
+                R.id.number_picker_seconds);
+        numberPickerHours.setMaxValue(24);
+        numberPickerMinutes.setMaxValue(59);
+        numberPickerSeconds.setMaxValue(59);
+        numberPickerHours.setWrapSelectorWheel(true);
+        numberPickerMinutes.setWrapSelectorWheel(true);
+        numberPickerSeconds.setWrapSelectorWheel(true);
+        numberPickerHours.setOnValueChangedListener(this);
+        numberPickerMinutes.setOnValueChangedListener(this);
+        numberPickerSeconds.setOnValueChangedListener(this);
+        numberPickerHours.setValue(npHour);
+        numberPickerMinutes.setValue(npMinute);
+        numberPickerSeconds.setValue(npSecond);
+
+        dialog.setView(dialogView);
+        //dialog.setCancelable(false);
+
+        dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                String freq = String.valueOf(npMinute);
-/*                if (npMinute == 1) {
-                    freq = freq + " minute";
-                } else {
-                    freq = freq + " minutes"; //todo if freq is large changes to multiple lines
-                } */
-                textViewFrequency.setText(freq);
+            public void onClick(DialogInterface dialog, int which) {
+                //todo save time
+                String hours = "";
+                int frequency = (npHour * 60 * 60 + npMinute * 60 + npSecond) * 1000;
+                mReminder.setLongFrequency(frequency);
+                if (npHour != 0) { hours = String.valueOf(npHour) + ":"; }
+                textViewFrequency.setText("Interval: " + hours + String.format("%02d:%02d",
+                        npMinute, npSecond));
                 dialog.dismiss();
             }
         });
-
-        buttonCancel.setOnClickListener(new View.OnClickListener() {
+        dialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
             }
         });
-        dialog.show();
+
+        AlertDialog alertDialog = dialog.create();
+
+
+//        buttonOK.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                String freq = String.valueOf(npMinute);
+///*                if (npMinute == 1) {
+//                    freq = freq + " minute";
+//                } else {
+//                    freq = freq + " minutes"; //todo if freq is large changes to multiple lines
+//                } */
+//                textViewFrequency.setText(freq);
+//                dialog.dismiss();
+//            }
+//        });
+//
+//        buttonCancel.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                dialog.dismiss();
+//            }
+//        });
+        alertDialog.show();
     }
 
     private void initDayButtons() {

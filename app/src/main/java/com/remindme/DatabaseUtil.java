@@ -55,13 +55,13 @@ public class DatabaseUtil {
 	private static final String DATABASE_NAME = "dbRemindMe";
 	private static final String DATABASE_TABLE = "mainReminders";
     private static final String DATABASE_TABLE_CURRENT = "currentReminder";
-	private static final int DATABASE_VERSION = 11; // The version number must be incremented each time a change to DB structure occurs.
+	private static final int DATABASE_VERSION = 12; // The version number must be incremented each time a change to DB structure occurs.
 		
 	//set up SQL statement for creating database table
 	private static final String DATABASE_CREATE_SQL = 
 			"CREATE TABLE " + DATABASE_TABLE 
 			+ " (" + FIELD_ROWID + " INTEGER PRIMARY KEY, "
-			+ FIELD_REMINDER + " TEXT NOT NULL, "
+			+ FIELD_REMINDER + " TEXT, "
 			+ FIELD_FREQUENCY + " TEXT, "
             + FIELD_TIME_FROM + " TIME, "  //use milliseconds for database
             + FIELD_TIME_TO + " TIME, "
@@ -157,8 +157,8 @@ public class DatabaseUtil {
         String where = FIELD_ROWID + "=" + reminder.getRowId();
         updateValues.put(FIELD_REMINDER, reminder.getReminder());
         updateValues.put(FIELD_FREQUENCY, reminder.getFrequency());
-        updateValues.put(FIELD_TIME_FROM, reminder.getTimeFromAsString() + ":00");
-        updateValues.put(FIELD_TIME_TO, reminder.getTimeToAsString() + ":00");
+        updateValues.put(FIELD_TIME_FROM, reminder.getTimeFromAsString().substring(0, 4) + ":00");
+        updateValues.put(FIELD_TIME_TO, reminder.getTimeToAsString().substring(0, 4) + ":00");
         updateValues.put(FIELD_MONDAY, days[0]);
         updateValues.put(FIELD_TUESDAY, days[1]);
         updateValues.put(FIELD_WEDNESDAY, days[2]);

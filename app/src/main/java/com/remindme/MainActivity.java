@@ -185,8 +185,9 @@ public class MainActivity extends ActionBarActivity {
         super.onResume();
         //todo sync active timers with pendingIntents?
         Log.v("onResume", "Main fired onResume");
-
         updateReminders();
+        dataArray = SingletonDataArray.getInstance().getDataArray();
+        myAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -204,6 +205,31 @@ public class MainActivity extends ActionBarActivity {
         Log.v("onDestroy", "Main fired onDestroy");
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_add) {
+            Intent intent = new Intent(this, EditActivity.class);
+            intent.putExtra("arrayId", dataArray.size());
+            startActivity(intent);
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
     //this handler sets up a countdown timer for the reminders in the spinner
     private void callHandler() {
         final Handler timerHandler = new Handler();
@@ -219,9 +245,9 @@ public class MainActivity extends ActionBarActivity {
                             Log.v("reduced counter", reminder.getCounterAsString());
                             startReminder(reminder);
                         }
+                        myAdapter.notifyDataSetChanged();
                     }
                 }
-                myAdapter.notifyDataSetChanged();
             }
         };
         timerRunnable.run();
@@ -251,7 +277,7 @@ public class MainActivity extends ActionBarActivity {
 
         Cursor cursor = myDb.getAllRows();
         int count = cursor.getCount();
-        dataArray = new ArrayList<Reminder>();
+        dataArray = SingletonDataArray.getInstance().getDataArray();
 
         //set up last selected row
         spinnerDbId = myDb.getCurrentRowId();
@@ -294,7 +320,7 @@ public class MainActivity extends ActionBarActivity {
         }
         //set up the custom adapter
         spinner = (ListView) findViewById(R.id.listview_reminder);
-        myAdapter = new MyAdapter(getApplicationContext(), dataArray, spinner);
+        myAdapter = new MyAdapter(getApplicationContext(), spinner);
     }
 
     private void addItemsToSpinner() {
@@ -341,8 +367,6 @@ public class MainActivity extends ActionBarActivity {
 
     //create a new blank reminder and send it to Edit Activity
     public void goNewReminder(View view) {
-        Intent intent = new Intent(this, MyPreferenceActivity.class);
-        startActivity(intent);
 /*
         long rowId = myDb.createNewEntry();
         Reminder reminder = new Reminder("","0",rowId);
