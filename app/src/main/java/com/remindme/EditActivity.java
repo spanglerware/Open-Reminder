@@ -84,8 +84,9 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private long editId;
     private boolean editReminder;
     private Reminder mReminder;
-    private TextView tvTimeMin;
-    private TextView tvTimeMax;
+    private int mListPosition;
+//    private TextView tvTimeMin;
+//    private TextView tvTimeMax;
 
 
     @Override
@@ -96,41 +97,14 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         //todo move to assignObjects method
         initDayButtons();
 
-        //todo move to assignObjects method, use stored values
-        rangeBar = new RangeSeekBar<Float>(this);
-        rangeBar.setRangeValues(0.0f, 24.0f);
-        rangeBar.setSelectedMinValue(9.0f);
-        rangeBar.setSelectedMaxValue(17.0f);
-        rangeBar.setPadding(10,0,10,0);
-
-        tvTimeMax = (TextView) findViewById(R.id.time_range_max);
-        tvTimeMin = (TextView) findViewById(R.id.time_range_min);
-
-        rangeBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Float>() {
-            @Override
-            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Float minValue, Float maxValue) {
-                int timeMinHours = (int) Math.floor(minValue);
-                int timeMaxHours = (int) Math.floor(maxValue);
-                int timeMinMinutes = (int) ((minValue - Math.floor(minValue)) * 60.0f);
-                int timeMaxMinutes = (int) ((maxValue - Math.floor(maxValue)) * 60.0f);
-
-                tvTimeMin.setText("From: " + String.valueOf(timeMinHours) + ":" + String.format("%02d", timeMinMinutes));
-                tvTimeMax.setText("To: " + String.valueOf(timeMaxHours) + ":" + String.format("%02d", timeMaxMinutes));
-                // handle changed range values
-//                Log.i(TAG, "User selected new date range: MIN=" + new Date(minValue) + ", MAX=" + new Date(maxValue));
-            }
-        });
-
-        ViewGroup container = (ViewGroup) findViewById(R.id.edit_container);
-        container.addView(rangeBar);
-        //set local variables to interface objects
         assignObjects();
 
         //load interface with data in case of an edit
         Intent intent = getIntent();
         mReminder = intent.getParcelableExtra("reminder");
+        mListPosition = intent.getIntExtra("position", 0);
 
-        if (mReminder != null) { //todo this should now always be true
+        if (mReminder != null) {
             editReminder = true;
             loadEditData();
         } else {
@@ -139,6 +113,28 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             createNewReminder(arrayId);
         }
 
+        //todo move to assignObjects method, use stored values
+        rangeBar = new RangeSeekBar<Float>(this);
+        rangeBar.setRangeValues(0.0f, 24.0f);
+        rangeBar.setSelectedMinValue(9.0f);
+        rangeBar.setSelectedMaxValue(17.0f);
+        rangeBar.setPadding(10,0,10,0);
+
+        rangeBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Float>() {
+            @Override
+            public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Float minValue, Float maxValue) {
+
+            mReminder.setTimes(minValue, maxValue);
+            }
+        });
+
+        ViewGroup container = (ViewGroup) findViewById(R.id.edit_container);
+        container.addView(rangeBar);
+
+        rangeBar.setSelectedMinValue(mReminder.getTimeFrom());
+        rangeBar.setSelectedMaxValue(mReminder.getTimeTo());
+
+        //set local variables to interface objects
         //loadNotificationList();
         //loadAlarmList();
 
@@ -151,7 +147,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         super.onPause();
         mReminder.setReminder(etReminder.getText().toString());
         mReminder.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
-        mReminder.update(this, editReminder);
+        mReminder.update(this, editReminder, mListPosition);
     }
 
 
@@ -190,10 +186,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         });
     }
-
-    //todo register mediaplayer onCompletion listener then release the mediaplayer
-
-
 
     public void assignObjects() {
         etReminder = (EditText) findViewById(R.id.edittext_reminder);
@@ -244,16 +236,18 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     } //end of loadEditData
 
     private void createNewReminder(int arrayId) {
+        //create a new record in the database with default values
+        //todo may want to change default values for reminder, frequency, and days
         DatabaseUtil db = new DatabaseUtil(this);
         db.open();
-        long reminderId = db.insertRow("", "0", new Time(0), new Time(0), false, false, false, false,
+        long rowId = db.insertRow("", "0", 9.0f, 17.0f, false, false, false, false,
                 false, false, false, false, false, 0);
-        mReminder = new Reminder("", "0", reminderId);
-        mReminder.setReminderId(arrayId);
-        mReminder.setTimes(0, 0);
+        mReminder = new Reminder("", "0", rowId);
+        mReminder.setTimes(9.0f, 17.0f);
         mReminder.setDays(false, false, false, false, false, false, false);
         mReminder.setMisc(false, false, 0);
         db.close();
+
     }
 
 
@@ -291,9 +285,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     }
 
     public void goSelectFrequency(View view) {
-        //todo set up case for selecting single time or repeating frequency
-        //todo could use timepicker for single and number picker for recurring
-        //depends on Usage selection, if single use open up a time selector, if recurring enter frequency
         showNumberPickerDialog();
     }
 
@@ -328,7 +319,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                //todo save time
                 String hours = "";
                 int frequency = (npHour * 60 * 60 + npMinute * 60 + npSecond) * 1000;
                 mReminder.setLongFrequency(frequency);
@@ -355,7 +345,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 ///*                if (npMinute == 1) {
 //                    freq = freq + " minute";
 //                } else {
-//                    freq = freq + " minutes"; //todo if freq is large changes to multiple lines
+//                    freq = freq + " minutes";
 //                } */
 //                textViewFrequency.setText(freq);
 //                dialog.dismiss();

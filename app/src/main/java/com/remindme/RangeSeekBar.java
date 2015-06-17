@@ -98,11 +98,13 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     private int mTextOffset;
     private int mTextSize;
     private int mDistanceToTop;
+    private int mMaxValueYOffset;
     private RectF mRect;
 
     private static final int DEFAULT_TEXT_SIZE_IN_DP = 14;
     private static final int DEFAULT_TEXT_DISTANCE_TO_BUTTON_IN_DP = 8;
     private static final int DEFAULT_TEXT_DISTANCE_TO_TOP_IN_DP = 2;
+    private static final int DEFAULT_TEXT_MAX_VALUE_Y_OFFSET = 10;
     private boolean mSingleThumb;
 
     //todo fix display error on min/max selections
@@ -156,6 +158,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
         mDistanceToTop = PixelUtil.dpToPx(context, DEFAULT_TEXT_DISTANCE_TO_TOP_IN_DP);
         mTextOffset = this.mTextSize + PixelUtil.dpToPx(context,
                 DEFAULT_TEXT_DISTANCE_TO_BUTTON_IN_DP) + this.mDistanceToTop;
+        mMaxValueYOffset = PixelUtil.dpToPx(context, DEFAULT_TEXT_MAX_VALUE_Y_OFFSET);
 
         float lineHeight = PixelUtil.dpToPx(context, LINE_HEIGHT_IN_DP);
         mRect = new RectF(padding,
@@ -504,24 +507,58 @@ public class RangeSeekBar<T extends Number> extends ImageView {
             int offset = PixelUtil.dpToPx(getContext(), TEXT_LATERAL_PADDING_IN_DP);
 
             //todo format string for dates, round to nearest 10 minutes
+            T min = getSelectedMinValue();
+            T max = getSelectedMaxValue();
 
-            String minText = String.valueOf(getSelectedMinValue());
-            String maxText = String.valueOf(getSelectedMaxValue());
+            String minText, maxText;
+            if (min instanceof Float) {
+                float minValue = (Float) min;
+                float maxValue = (Float) max;
+                minText = TimeUtil.FloatTimeToString(minValue);
+                maxText = TimeUtil.FloatTimeToString(maxValue);
+            } else {
+                minText = String.valueOf(getSelectedMinValue());
+                maxText = String.valueOf(getSelectedMaxValue());
+            }
             float minTextWidth = paint.measureText(minText) + offset;
             float maxTextWidth = paint.measureText(maxText) + offset;
 
+            //set up text placement offset to ensure text does not overlap
+            float minTextX = normalizedToScreen(normalizedMinValue) - minTextWidth * 0.5f;
+            float maxTextX = normalizedToScreen(normalizedMaxValue) - maxTextWidth * 0.5f;
+
+            if (pressedThumb == Thumb.MIN) {
+                if ((maxTextX - minTextX) < 200) {
+                    if (minTextX > 200) {
+                        minTextX = maxTextX - 200;
+                    }
+                }
+            } else if (pressedThumb == Thumb.MAX) {
+                if ((maxTextX - minTextX) < 200) {
+                    if (maxTextX > 500) {
+                        maxTextX = minTextX + 200;
+                    }
+                }
+            }
+
             if (!mSingleThumb) {
                 canvas.drawText(minText,
-                        normalizedToScreen(normalizedMinValue) - minTextWidth * 0.5f,
+                        minTextX,
                         mDistanceToTop + mTextSize,
                         paint);
 
             }
 
             canvas.drawText(maxText,
-                    normalizedToScreen(normalizedMaxValue) - maxTextWidth * 0.5f,
+                    maxTextX,
                     mDistanceToTop + mTextSize,
                     paint);
+
+            //use Y offset to prevent text overlap
+//            canvas.drawText(maxText,
+//                    maxTextX,
+//                    mDistanceToTop + mTextSize + mMaxValueYOffset,
+//                    paint);
         }
 
     }

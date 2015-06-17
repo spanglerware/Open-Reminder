@@ -25,12 +25,17 @@ public class SingletonDataArray {
         return dataArray;
     }
 
-    public void updateReminder(Reminder reminder) {
-        dataArray.set(reminder.getReminderId(), reminder);
+    public void updateReminder(Reminder reminder, int position) {
+        //todo getReminderId position does not update when the list changes
+        dataArray.set(position, reminder);
     }
 
     public void addReminder(Reminder reminder) {
         dataArray.add(reminder);
+    }
+
+    public void removeReminder(int position) {
+        dataArray.remove(position);
     }
 
 }

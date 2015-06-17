@@ -42,12 +42,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 
-public class MainActivity extends ActionBarActivity {
+public class MainActivity extends ActionBarActivity implements ReminderCallbacks {
 
     private static final int REQUEST_NEW = 0;
     private static final int REQUEST_EDIT = 1;
 
     private DatabaseUtil myDb;
+    private ReminderCallbacks reminderCallbacks;
 
     private boolean bStarted;
     private boolean bSelected;
@@ -71,37 +72,13 @@ public class MainActivity extends ActionBarActivity {
 
     //todo need icons for app and notification
 
-    //todo fix spinner list position for main screen
-
-    //todo for different screen sizes try using center_horizontal layout for central widgets
-
-    //todo add motion to spinner, right to delete, hold to edit, left to insert new; add animate for fx?
-
     //todo clean up and comment code in main
-
-    //todo study android calendar set reminders and utilize style and layout
-
-    //todo for a simple timer allow the user to tap frequency timer and select a new time
-
-    //todo can use Timer object to run notifications or alarms
-
-    //todo change main textview to a listview of all active reminders
 
     //todo add random reminders using Notification CATEGORY_RECOMMENDATION
 
-    //todo be able to select specific time for alarm on selected days
-
-    //todo future version may implement expandable listview for grouping of reminders
-
-    //todo redesign database with more tables to make more oo?
-
     //todo set layouts to scrollable or change property so landscape is disabled
 
-    //todo add onTouch to main, swipe right/left for new/edit
-
-    //todo add voice support
-
-    //todo remove cancel buttons and save any changes made immediately? currently more common to do so
+    //todo simplify app to focus on primary function
 
 
     @Override
@@ -114,6 +91,7 @@ public class MainActivity extends ActionBarActivity {
         bStarted = false;
         bSelected = false;
         //btnStart = (Button) findViewById(R.id.buttonStart);
+
 
         fillDataArray();
         addItemsToSpinner();
@@ -141,9 +119,11 @@ public class MainActivity extends ActionBarActivity {
                 } else {
                     //close previous selection then open new one
                     View viewPrevious = parent.getChildAt(selected);
-                    MyAdapter.TestViewHolder vhPrevious = (MyAdapter.TestViewHolder) viewPrevious.getTag();
-                    vhPrevious.llSecondary.setVisibility(View.GONE);
-                    vhPrevious.llAll.setBackgroundResource(R.color.transparent);
+                    if (viewPrevious != null) {
+                        MyAdapter.TestViewHolder vhPrevious = (MyAdapter.TestViewHolder) viewPrevious.getTag();
+                        vhPrevious.llSecondary.setVisibility(View.GONE);
+                        vhPrevious.llAll.setBackgroundResource(R.color.transparent);
+                    }
 //                    vhPrevious.llAll.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
                     viewHolder.llSecondary.setVisibility(View.VISIBLE);
                     viewHolder.llAll.setBackgroundResource(R.color.light_grey);
@@ -162,7 +142,6 @@ public class MainActivity extends ActionBarActivity {
     protected void onPause() {
         //wakeLock.release();
         super.onPause();
-        //todo need to store time values?
         Log.v("onPause", "Main fired onPause");
         //from documentation: When an activity's onPause() method is called, it should commit to the backing content provider or file any changes the user has made.
     }
@@ -170,7 +149,6 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        //todo this method called when activity no longer visible, may need to store data on this call
         Log.v("onStop", "Main fired onStop");
     }
 
@@ -183,7 +161,6 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //todo sync active timers with pendingIntents?
         Log.v("onResume", "Main fired onResume");
         updateReminders();
         dataArray = SingletonDataArray.getInstance().getDataArray();
@@ -193,14 +170,12 @@ public class MainActivity extends ActionBarActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        //todo restart kills all the active timers?
         Log.v("onRestart", "Main fired onRestart");
     }
 
     @Override
     protected void onDestroy(){
         super.onDestroy();
-        //todo ensure all PendingIntents are canceled?
         closeDb();
         Log.v("onDestroy", "Main fired onDestroy");
     }
@@ -230,6 +205,32 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+
+    @Override
+    public void startReminderCallBack(Reminder reminder) {
+        startReminder(reminder);
+    }
+
+    @Override
+    public void deleteReminderCallBack(int position) {
+        createDeleteDialog(position);
+    }
+
+    @Override
+    public void editReminderCallBack(int position) {
+        goEdit(position);
+    }
+
+    @Override
+    public void cancelReminderCallBack(Reminder reminder) {
+        cancelReminder(reminder);
+    }
+
+    @Override
+    public void notificationCallBack(String reminderText) {
+        displayToast(reminderText);
+    }
+
     //this handler sets up a countdown timer for the reminders in the spinner
     private void callHandler() {
         final Handler timerHandler = new Handler();
@@ -243,7 +244,7 @@ public class MainActivity extends ActionBarActivity {
                         Log.v("active reminder counter", reminder.getCounterAsString());
                         if (reminder.reduceCounter(interval)) {
                             Log.v("reduced counter", reminder.getCounterAsString());
-                            startReminder(reminder);
+                            //startReminder(reminder);
                         }
                         myAdapter.notifyDataSetChanged();
                     }
@@ -267,8 +268,8 @@ public class MainActivity extends ActionBarActivity {
         long rowId;
         String frequency;
         String reminder;
-        long timeFrom;
-        long timeTo;
+        float timeFrom;
+        float timeTo;
         boolean monday, tuesday, wednesday, thursday, friday, saturday, sunday;
         boolean reminderUseType;
         boolean notificationType;
@@ -291,10 +292,8 @@ public class MainActivity extends ActionBarActivity {
                 reminder = cursor.getString(DatabaseUtil.COLUMN_REMINDER);
                 if (rowId == spinnerDbId) { spinnerRow = i + 1; spinnerReminder = reminder; }
 
-                time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_FROM));
-                timeFrom = time.getTime();
-                time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_TO));
-                timeTo = time.getTime();
+                timeFrom = cursor.getFloat(DatabaseUtil.COLUMN_TIME_FROM);
+                timeTo = cursor.getFloat(DatabaseUtil.COLUMN_TIME_TO);
 
                 monday = cursor.getInt(DatabaseUtil.COLUMN_MONDAY) > 0;
                 tuesday = cursor.getInt(DatabaseUtil.COLUMN_TUESDAY) > 0;
@@ -312,7 +311,6 @@ public class MainActivity extends ActionBarActivity {
                 item.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
                 item.setTimes(timeFrom, timeTo);
                 item.setMisc(reminderUseType, notificationType, messageId);
-                item.setReminderId(i);
                 dataArray.add(i, item);
 
                 cursor.moveToNext();
@@ -320,7 +318,7 @@ public class MainActivity extends ActionBarActivity {
         }
         //set up the custom adapter
         spinner = (ListView) findViewById(R.id.listview_reminder);
-        myAdapter = new MyAdapter(getApplicationContext(), spinner);
+        myAdapter = new MyAdapter(getApplicationContext(), spinner, this);
     }
 
     private void addItemsToSpinner() {
@@ -329,55 +327,24 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void updateReminders() {
+        //todo controls are now in MyAdapter, need to update there
+
         for (Reminder reminder : dataArray) {
             if (reminder.isActive()) {
                 if (reminder.updateCounter()) {
 
                 }
                 //myAdapter.reduceCounters(0);
-                if (!reminder.isActive()) {
-                    setButtonImage(true);
-                } else {
-                    setButtonImage(false);
-                }
+//                if (!reminder.isActive()) {
+//                } else {
+//                }
             }
         }
     }
 
-    private void displayToast(long id){
-        Cursor cursor = myDb.getRow(id);
-        if (cursor.moveToFirst()){
-            long idDb = cursor.getLong(DatabaseUtil.COLUMN_ROWID);
-            String reminder = cursor.getString(DatabaseUtil.COLUMN_REMINDER);
-            String frequency = cursor.getString(DatabaseUtil.COLUMN_FREQUENCY);
-
-            String message = "ID: " + idDb + "\n" + "Reminder: " + reminder + "\n" + "Frequency: " + frequency;
-            Toast.makeText(MainActivity.this,message,Toast.LENGTH_LONG).show();
-        }
-        cursor.close();
-    }
-
-    //send a Reminder to the Edit Activity
-    public void goEditReminder(View view) {
-        //todo may need to stop an active reminder before sending to edit
-//        Intent intent = new Intent(this, EditActivity.class);
-//        intent.putExtra("reminder",dataArray.get(spinnerRow));
-//        startActivityForResult(intent, REQUEST_EDIT);
-    }
-
-    //create a new blank reminder and send it to Edit Activity
-    public void goNewReminder(View view) {
-/*
-        long rowId = myDb.createNewEntry();
-        Reminder reminder = new Reminder("","0",rowId);
-        reminder.setDays(false,false,false,false,false,false,false);
-        reminder.setTimes("09:00", "17:00");
-        reminder.setMisc(true, true, 0);
-        reminder.setReminderId(dataArray.size());
-
-        intent.putExtra("reminder", reminder);
-        startActivityForResult(intent, REQUEST_NEW);
-*/
+    private void displayToast(String text){
+        String message = "Reminder: " + text;
+        Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
     }
 
     @Override
@@ -402,39 +369,13 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
-    public void goStartReminder(View view) {
-        int position = spinner.getSelectedItemPosition();
-        Reminder reminder = dataArray.get(position);
-
-        //todo may want to move some of these statements to after if conditions
-
-//        if (bStarted) {
-//            if (reminder.getNotificationType()) {
-//                //todo move out of if
-//                cancelReminder(reminder);
-//            } else {
-//                cancelReminder(reminder);
-//            }
-//        } else {
-//            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
-//            if (reminder.getNotificationType()) {
-//                //todo move out of if
-//                startReminder(reminder);
-//            } else {
-//                startReminder(reminder);
-//            }
-//        }
-//        myAdapter.notifyDataSetChanged();
-
-        //todo wait does not work, need to capture current time, store it, cancel button, then restart with stored value
-    }
 
     private void startReminder(Reminder reminder) {
-        int reminderId = reminder.getReminderId();
+        int reminderId = (int) reminder.getRowId();
         long alarmTime = reminder.getAlarmTime();
         reminder.setActive(true);
         bStarted = true;
-        setButtonImage(false);
+        //setButtonImage(false);
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlarmReceiver.class);
@@ -448,34 +389,13 @@ public class MainActivity extends ActionBarActivity {
     }
 
     private void cancelReminder(Reminder reminder) {
-        int reminderId = reminder.getReminderId();
+        int reminderId = (int) reminder.getRowId();
         reminder.setActive(false);
-        bStarted = false;
-        setButtonImage(true);
 
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlarmReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getActivity(this, reminderId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
         pendingIntent.cancel();
     }
-
-
-    private void setButtonImage(boolean toStart) {
-/*
-        if (toStart) {
-            btnStart.setText("Start");
-            btnStart.setTextColor(Color.parseColor("#009400"));
-            btnStart.setBackgroundResource(R.drawable.button_start);
-        } else {
-            btnStart.setText("Stop");
-            btnStart.setTextColor(Color.RED);
-            btnStart.setBackgroundResource(R.drawable.button_stop);
-        }
-*/
-    }
-
-
 
     private void registerSpinnerSelectionEvent() {
         xDown = 0;
@@ -493,31 +413,27 @@ public class MainActivity extends ActionBarActivity {
 
                 if (item.isActive()){
                     bStarted = true;
-                    setButtonImage(false);
                 } else {
                     bStarted = false;
-                    setButtonImage(true);
                 }
 
                 MyAdapter.TestViewHolder viewHolder = (MyAdapter.TestViewHolder) viewSelected.getTag();
 
                 //set visibility of child views to expand or contract selection
                 if (!bSelected) {
-                    viewHolder.tvHolderNotType.setVisibility(View.VISIBLE);
+//                    viewHolder.tvHolderNotType.setVisibility(View.VISIBLE);
                     viewHolder.tvHolderTimes.setVisibility(View.VISIBLE);
                     viewHolder.tvHolderDays.setVisibility(View.VISIBLE);
                     viewHolder.tvHolderFrequency.setVisibility(View.VISIBLE);
 
                 } else {
-                    viewHolder.tvHolderNotType.setVisibility(View.GONE);
+//                    viewHolder.tvHolderNotType.setVisibility(View.GONE);
                     viewHolder.tvHolderTimes.setVisibility(View.GONE);
                     viewHolder.tvHolderDays.setVisibility(View.GONE);
                     viewHolder.tvHolderFrequency.setVisibility(View.GONE);
 
                 }
                 bSelected = !bSelected;
-
-                //todo still need current field? if so need to update as below
                 myDb.changeCurrent(spinnerDbId);
             }
 
@@ -527,9 +443,6 @@ public class MainActivity extends ActionBarActivity {
         });
 
     }
-    //todo set up spinner onTouchEvent method (left for delete and right for insert) and longClick for edit
-
-    //todo separate onTouch and onItemClick events, right now both are firing, override onClick, may need to set up custom spinner and override forwarding listener
 
     private void registerSpinnerOnTouchEvent() {
         spinner.setOnTouchListener(new View.OnTouchListener() {
@@ -538,8 +451,7 @@ public class MainActivity extends ActionBarActivity {
 
                 String msg;
                 switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                    {
+                    case MotionEvent.ACTION_DOWN: {
                         xDown = event.getX();
                         yDown = event.getY();
                     }
@@ -551,11 +463,10 @@ public class MainActivity extends ActionBarActivity {
                         if (xUp - xDown > 100) {
                             //msg = "right";
                             //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
-                            goEditReminder(view);
                         } else if (xDown - xUp > 100) {
                             //msg = "left";
                             //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
-                            createDeleteDialog();
+                            //createDeleteDialog();
                         }
                         break;
                     }
@@ -575,24 +486,41 @@ public class MainActivity extends ActionBarActivity {
         });
     }
 
-    private void goDelete() {
-        TextView textView = (TextView) findViewById(R.id.textViewItemNumber);
-        long id = Long.parseLong(textView.getText().toString());
-        //todo set up alertdialog
-        myDb.deleteRow(id);
-        myAdapter.removeItem(spinner.getSelectedItemPosition());
-        myAdapter.notifyDataSetChanged();
+    private void goEdit(int position) {
+        Intent intent = new Intent(this, EditActivity.class);
+        Reminder reminder = dataArray.get(position);
+        reminder.setActive(false);
+        intent.putExtra("reminder", reminder);
+        intent.putExtra("position", position);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        startActivity(intent);
     }
 
-    private void createDeleteDialog() {
+    private void goDelete(int position) {
+        //remove reminder from mItems
+        long reminderId = dataArray.get(position).getRowId();
+        dataArray.remove(position);
+        //update reminder instance
+        SingletonDataArray.getInstance().removeReminder(position);
+        myAdapter.notifyDataSetChanged();
+
+        //remove from db
+        myDb.deleteRow(reminderId);
+
+        //refresh adapter
+        myAdapter.refresh();
+    }
+
+    private void createDeleteDialog(final int position) {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder
                 .setTitle("Confirm Delete")
-                .setMessage("Would you like to delete the reminder: " + spinnerReminder)
+                .setMessage("Would you like to delete the reminder: " +
+                        dataArray.get(position).getReminder())
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialogInterface, int id) {
-                        goDelete();
+                        goDelete(position);
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {

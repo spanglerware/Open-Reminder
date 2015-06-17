@@ -99,16 +99,16 @@
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
 
-            <TextView
-                android:id="@+id/list_item_reminder_notification_type"
-                android:text="New Text"
-                android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:paddingLeft="30dp"
-                android:fontFamily="sans-serif-condensed"
-                android:layout_marginBottom="6dp"
-                android:textAppearance="?android:textAppearanceSmall"/>
+            <!--<TextView-->
+                <!--android:id="@+id/list_item_reminder_notification_type"-->
+                <!--android:text="New Text"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="fill_parent"-->
+                <!--android:layout_weight="1"-->
+                <!--android:paddingLeft="30dp"-->
+                <!--android:fontFamily="sans-serif-condensed"-->
+                <!--android:layout_marginBottom="6dp"-->
+                <!--android:textAppearance="?android:textAppearanceSmall"/>-->
 
             <TextView
                 android:id="@+id/list_item_reminder_times"
@@ -127,10 +127,10 @@
             android:id="@+id/container_buttons"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="3"
+            android:layout_weight="2"
             android:animateLayoutChanges="true"
             android:layout_marginBottom="16dp"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
             <!--<Button-->
                 <!--android:layout_width="30dp"-->
@@ -144,18 +144,18 @@
                 <!--style="@style/button_green" />-->
 
             <Button
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:text="Start"
                 android:id="@+id/button_start"
                 android:layout_gravity="right"
-                android:onClick="goStartReminder"
-                android:fontFamily="sans-serif-condensed"
-                android:textAppearance="?android:textAppearanceSmall"
-                android:layout_marginBottom="6dp"
+                android:layout_marginBottom="16dp"
                 android:layout_marginEnd="20dp"
-                style="@style/button_green" />
+                android:background="@drawable/play2"/>
+                <!--style="@style/button_green" -->
+            <!--android:text="Start"-->
+            <!--android:fontFamily="sans-serif-condensed"-->
+            <!--android:textAppearance="?android:textAppearanceSmall"-->
 
             <!--<Button-->
                 <!--android:layout_width="60dp"-->
@@ -170,17 +170,31 @@
     <!-- -->
 
             <Button
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
                 android:layout_weight="1"
-                android:text="Edit"
                 android:id="@+id/button_edit"
                 android:layout_gravity="right"
-                android:onClick="goEditReminder"
-                android:fontFamily="sans-serif-condensed"
-                android:textAppearance="?android:textAppearanceSmall"
                 android:layout_marginEnd="20dp"
-                style="@style/button" />
+                android:layout_marginBottom="16dp"
+                android:background="@drawable/pencil"
+                />
+
+            <!--android:text="Edit"-->
+            <!--android:fontFamily="sans-serif-condensed"-->
+            <!--android:textAppearance="?android:textAppearanceSmall"-->
+            <!--style="@style/button"-->
+
+            <Button
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_weight="1"
+                android:id="@+id/button_delete"
+                android:layout_gravity="right"
+                android:layout_marginEnd="20dp"
+                android:background="@drawable/cancel_circle"
+                />
+
 
             <!--<Button-->
                 <!--android:layout_width="30dp"-->

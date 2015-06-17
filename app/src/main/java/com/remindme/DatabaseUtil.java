@@ -55,7 +55,7 @@ public class DatabaseUtil {
 	private static final String DATABASE_NAME = "dbRemindMe";
 	private static final String DATABASE_TABLE = "mainReminders";
     private static final String DATABASE_TABLE_CURRENT = "currentReminder";
-	private static final int DATABASE_VERSION = 12; // The version number must be incremented each time a change to DB structure occurs.
+	private static final int DATABASE_VERSION = 13; // The version number must be incremented each time a change to DB structure occurs.
 		
 	//set up SQL statement for creating database table
 	private static final String DATABASE_CREATE_SQL = 
@@ -63,8 +63,8 @@ public class DatabaseUtil {
 			+ " (" + FIELD_ROWID + " INTEGER PRIMARY KEY, "
 			+ FIELD_REMINDER + " TEXT, "
 			+ FIELD_FREQUENCY + " TEXT, "
-            + FIELD_TIME_FROM + " TIME, "  //use milliseconds for database
-            + FIELD_TIME_TO + " TIME, "
+            + FIELD_TIME_FROM + " REAL, "  //use milliseconds for database
+            + FIELD_TIME_TO + " REAL, "
             + FIELD_MONDAY + " BOOLEAN, "
             + FIELD_TUESDAY + " BOOLEAN, "
             + FIELD_WEDNESDAY + " BOOLEAN, "
@@ -104,14 +104,14 @@ public class DatabaseUtil {
 
     //todo can combine insert and update methods by using a boolean parameter
 	//insert a new set of values into the main table
-	public long insertRow(String reminder, String frequency, Time timeFrom, Time timeTo,
+	public long insertRow(String reminder, String frequency, float timeFrom, float timeTo,
                           Boolean mon, Boolean tue, Boolean wed, Boolean thu, Boolean fri, Boolean sat, Boolean sun,
                           Boolean useType, Boolean notificationType, int messageId) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(FIELD_REMINDER, reminder);
 		initialValues.put(FIELD_FREQUENCY, frequency);
-        initialValues.put(FIELD_TIME_FROM, timeFrom.toString());
-        initialValues.put(FIELD_TIME_TO, timeTo.toString());
+        initialValues.put(FIELD_TIME_FROM, timeFrom);
+        initialValues.put(FIELD_TIME_TO, timeTo);
         initialValues.put(FIELD_MONDAY, mon);
         initialValues.put(FIELD_TUESDAY, tue);
         initialValues.put(FIELD_WEDNESDAY, wed);
@@ -133,8 +133,8 @@ public class DatabaseUtil {
         ContentValues initialValues = new ContentValues();
         initialValues.put(FIELD_REMINDER, reminder.getReminder());
         initialValues.put(FIELD_FREQUENCY, reminder.getFrequency());
-        initialValues.put(FIELD_TIME_FROM, reminder.getTimeFromAsString() + ":00");
-        initialValues.put(FIELD_TIME_TO, reminder.getTimeToAsString() + ":00");
+        initialValues.put(FIELD_TIME_FROM, reminder.getTimeFrom());
+        initialValues.put(FIELD_TIME_TO, reminder.getTimeTo());
         initialValues.put(FIELD_MONDAY, days[0]);
         initialValues.put(FIELD_TUESDAY, days[1]);
         initialValues.put(FIELD_WEDNESDAY, days[2]);
@@ -157,8 +157,8 @@ public class DatabaseUtil {
         String where = FIELD_ROWID + "=" + reminder.getRowId();
         updateValues.put(FIELD_REMINDER, reminder.getReminder());
         updateValues.put(FIELD_FREQUENCY, reminder.getFrequency());
-        updateValues.put(FIELD_TIME_FROM, reminder.getTimeFromAsString().substring(0, 4) + ":00");
-        updateValues.put(FIELD_TIME_TO, reminder.getTimeToAsString().substring(0, 4) + ":00");
+        updateValues.put(FIELD_TIME_FROM, reminder.getTimeFrom());
+        updateValues.put(FIELD_TIME_TO, reminder.getTimeTo());
         updateValues.put(FIELD_MONDAY, days[0]);
         updateValues.put(FIELD_TUESDAY, days[1]);
         updateValues.put(FIELD_WEDNESDAY, days[2]);
@@ -186,14 +186,14 @@ public class DatabaseUtil {
 	public Cursor getAllRows() {
 		Cursor cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
 		if (cursor.getCount() == 1) {
-            insertRow("Walk the Dog", "5", Time.valueOf("09:00:00"), Time.valueOf("17:00:00"), true, true, true, false, false, true, true, true, true, 0);
+            insertRow("Walk the Dog", "5", 9.0f, 17.0f, true, true, true, false, false, true, true, true, true, 0);
             cursor.moveToFirst();
         } else if (cursor.getCount() > 1) {
             cursor.moveToFirst();
 		} else {
             //todo need to fix the time inputs, they generate values of 0
-            insertRow("Take a Break!","5",Time.valueOf("09:00:00"),Time.valueOf("17:00:00"),true,true,true,false,false,true,true,true,true,0);
-            insertRow("Walk the Dog","5",Time.valueOf("09:00:00"),Time.valueOf("17:00:00"),true,true,true,false,false,true,true,true,true,0);
+            insertRow("Take a Break!","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0);
+            insertRow("Walk the Dog","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0);
             cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
         }
 		return cursor;
@@ -267,7 +267,7 @@ public class DatabaseUtil {
 
 
     public long createNewEntry() {
-        return insertRow("","0",Time.valueOf("09:00:00"),Time.valueOf("17:00:00"),false,false,false,false,false,false,false,true,true,0);
+        return insertRow("","0",9.0f,17.0f,false,false,false,false,false,false,false,true,true,0);
     }
 
 

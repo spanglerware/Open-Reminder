@@ -10,6 +10,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.support.v4.content.WakefulBroadcastReceiver;
+import android.widget.Toast;
 
 /**
  * Created by Scott on 5/5/2015.
@@ -51,6 +52,9 @@ public class AlarmReceiver extends BroadcastReceiver {
 
         context.startService(intentService);
         setResultCode(Activity.RESULT_OK);
+
+        //todo make the toast bigger, can add lines to the reminder with more information
+        Toast.makeText(context, reminder, Toast.LENGTH_LONG).show();
         wakeLock.release();
     }
 

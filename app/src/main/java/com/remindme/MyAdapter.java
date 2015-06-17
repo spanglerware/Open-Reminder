@@ -2,6 +2,7 @@ package com.remindme;
 
 import android.app.Activity;
 import android.app.AlarmManager;
+import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -34,11 +35,12 @@ import java.util.Map;
 
 public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     private LayoutInflater layoutInflater;
-    private final ArrayList<Reminder> mItems;
+    private ArrayList<Reminder> mItems;
     private final Context mContext;
     private HashMap<Integer,TextView> counterMap;
     protected ListView mListView;
     private boolean mStarted;
+    private ReminderCallbacks reminderCallbacks;
 
     public static int selectedId = -1;
 
@@ -49,15 +51,16 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         public TextView tvHolderCounter;
         public TextView tvHolderDays;
         public TextView tvHolderTimes;
-        public TextView tvHolderNotType;
+//        public TextView tvHolderNotType;
         public Button  btnStart;
         public Button btnEdit;
+        public Button btnDelete;
         public LinearLayout llSecondary;
         public LinearLayout llAll;
     }
 
 //todo use constructor for multiple TVs
-    public MyAdapter(Context context, ListView listView) {
+    public MyAdapter(Context context, ListView listView, ReminderCallbacks reminderCBs) {
         super();
         //super(context, data, resource, from, to);
         layoutInflater = LayoutInflater.from(context);
@@ -66,6 +69,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         counterMap = new HashMap<Integer,TextView>();
         mListView = listView;
         mStarted = false;
+        reminderCallbacks = reminderCBs;
     }
 
     public int getCount() {
@@ -79,7 +83,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     public long getItemId(int position) {
         return position;
     }
-
 
 
     @Override
@@ -96,11 +99,13 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             viewHolder.tvHolderFrequency = (TextView) rowView.findViewById(R.id.list_item_reminder_frequency);
             viewHolder.tvHolderDays = (TextView) rowView.findViewById(R.id.list_item_reminder_days);
             viewHolder.tvHolderTimes = (TextView) rowView.findViewById(R.id.list_item_reminder_times);
-            viewHolder.tvHolderNotType = (TextView) rowView.findViewById(R.id.list_item_reminder_notification_type);
+//            viewHolder.tvHolderNotType = (TextView) rowView.findViewById(R.id.list_item_reminder_notification_type);
             viewHolder.btnEdit = (Button) rowView.findViewById(R.id.button_edit);
             viewHolder.btnEdit.setOnClickListener(mOnEditClickListener);
             viewHolder.btnStart = (Button) rowView.findViewById(R.id.button_start);
             viewHolder.btnStart.setOnClickListener(mOnStartClickListener);
+            viewHolder.btnDelete = (Button) rowView.findViewById(R.id.button_delete);
+            viewHolder.btnDelete.setOnClickListener(mOnDeleteClickListener);
             viewHolder.llSecondary = (LinearLayout) rowView.findViewById(R.id.container_secondary);
             viewHolder.llAll = (LinearLayout) rowView.findViewById(R.id.container_all);
 
@@ -114,8 +119,8 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             viewHolder.tvHolderFrequency.setTextColor(color);
             viewHolder.tvHolderDays.setTypeface(typeface);
             viewHolder.tvHolderDays.setTextColor(color);
-            viewHolder.tvHolderNotType.setTypeface(typeface);
-            viewHolder.tvHolderNotType.setTextColor(color);
+//            viewHolder.tvHolderNotType.setTypeface(typeface);
+//            viewHolder.tvHolderNotType.setTextColor(color);
             viewHolder.tvHolderTimes.setTypeface(typeface);
             viewHolder.tvHolderTimes.setTextColor(color);
             viewHolder.tvHolderCounter.setTypeface(typeface);
@@ -131,17 +136,17 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         final TextView tvF = holder.tvHolderFrequency;
         final TextView tvD = holder.tvHolderDays;
         final TextView tvT = holder.tvHolderTimes;
-        final TextView tvN = holder.tvHolderNotType;
+//        final TextView tvN = holder.tvHolderNotType;
 
         Reminder item = mItems.get(position);
 
         tvRow.setText(String.valueOf(item.getRowId()));
         tvR.setText(item.getReminder());
         tvC.setText(item.getCounterAsString());
-        tvF.setText("Frequency: " + item.getFormattedFrequency());
+        tvF.setText("Timer: " + item.getFormattedFrequency());
         tvD.setText("Days: " + item.getDaysAsString());
         tvT.setText("Time: " + item.getTimeFromAsString() + " - " + item.getTimeToAsString());
-        tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
+//        tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
 
 //        if (item.isActive()) {
 //            counterMap.put(position,tvC);
@@ -176,23 +181,17 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         Reminder reminder = mItems.get(position);
 
         if (mStarted) {
-            if (reminder.getNotificationType()) {
-                //todo move out of if
-                cancelReminder(reminder, view);
-            } else {
-                cancelReminder(reminder, view);
-            }
+            setButtonImage(true, view);
+            mStarted = false;
+            reminderCallbacks.cancelReminderCallBack(reminder);
         } else {
             reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
-            if (reminder.getNotificationType()) {
-                //todo move out of if
-                startReminder(reminder, view);
-            } else {
-                startReminder(reminder, view);
-            }
+            setButtonImage(false, view);
+            mStarted = true;
+            reminderCallbacks.startReminderCallBack(reminder);
         }
-        notifyDataSetChanged();
 
+        notifyDataSetChanged();
         }
     };
 
@@ -200,19 +199,22 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         @Override
         public void onClick(View view) {
             final int position = mListView.getPositionForView((View) view.getParent());
-            Intent intent = new Intent(view.getContext(), EditActivity.class);
-            Reminder reminder = mItems.get(position);
-            reminder.setActive(false);
-            intent.putExtra("reminder", reminder);
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            view.getContext().startActivity(intent);
-            //todo update mItems with new information, then refresh display
+            reminderCallbacks.editReminderCallBack(position);
         }
     };
+
+    private View.OnClickListener mOnDeleteClickListener = (new View.OnClickListener() {
+        @Override
+        public void onClick(View view) {
+            final int position = mListView.getPositionForView((View) view.getParent());
+            reminderCallbacks.deleteReminderCallBack(position);
+        }
+    });
 
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
         //vh.row is the convertView in getView or you may call it the row item itself
+
         if (view instanceof Button) {
             Button button = (Button) view;
             button.setFocusable(true);
@@ -223,58 +225,30 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             viewHolder.btnEdit.setFocusable(false);
             viewHolder.btnStart.setFocusable(false);
             viewHolder.btnStart.setFocusableInTouchMode(false);
+            viewHolder.btnDelete.setFocusable(false);
+            viewHolder.btnDelete.setFocusableInTouchMode(false);
         }
         return false;
-    }
-
-    private void startReminder(Reminder reminder, View view) {
-        int reminderId = reminder.getReminderId();
-        long alarmTime = reminder.getAlarmTime();
-        reminder.setActive(true);
-        mStarted = true;
-        setButtonImage(false, view);
-
-        AlarmManager alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-        Intent alarmIntent = new Intent(mContext, AlarmReceiver.class);
-        alarmIntent.putExtra("reminder", reminder.getReminder());
-        alarmIntent.putExtra("reminderId", reminderId);
-        alarmIntent.putExtra("messageId", reminder.getMessageId());
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(mContext, reminderId,
-                alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
-    }
-
-    private void cancelReminder(Reminder reminder, View view) {
-        int reminderId = reminder.getReminderId();
-        reminder.setActive(false);
-        mStarted = false;
-        setButtonImage(true, view);
-
-        AlarmManager alarmManager = (AlarmManager) mContext.getSystemService(Context.ALARM_SERVICE);
-        Intent alarmIntent = new Intent(mContext, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(mContext, reminderId, alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        pendingIntent.cancel();
     }
 
     private void setButtonImage(boolean toStart, View view) {
         Button buttonStart = (Button) view;
 
         if (toStart) {
-            buttonStart.setText("Start");
-            buttonStart.setTextColor(Color.parseColor("#009400"));
-            buttonStart.setBackgroundResource(R.drawable.button_start);
+            //buttonStart.setText("Start");
+            //buttonStart.setTextColor(Color.parseColor("#009400"));
+            buttonStart.setBackgroundResource(R.drawable.play2);
         } else {
-            buttonStart.setText("Stop");
-            buttonStart.setTextColor(Color.RED);
-            buttonStart.setBackgroundResource(R.drawable.button_stop);
+            //buttonStart.setText("Stop");
+            //buttonStart.setTextColor(Color.RED);
+            buttonStart.setBackgroundResource(R.drawable.stop);
         }
-
     }
 
-
-
+    public void refresh() {
+        mItems = SingletonDataArray.getInstance().getDataArray();
+        notifyDataSetChanged();
+    }
 
     //end of MyAdapter class
 }

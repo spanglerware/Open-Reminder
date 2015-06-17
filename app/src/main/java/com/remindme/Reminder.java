@@ -25,11 +25,11 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public static boolean mSelected;
 
     private long rowId;  //id of reminder in the database
-    private int reminderId; //id of reminder that corresponds with position in dataArray
+//    private int reminderId; //id of reminder that corresponds with position in dataArray
     private String reminder;
     private String frequency;
-    private long timeFrom;
-    private long timeTo;
+    private float timeFrom;
+    private float timeTo;
 
     private boolean monday, tuesday, wednesday, thursday, friday, saturday, sunday;
     private ArrayList<Integer> messageDays;
@@ -69,8 +69,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         parcel.writeString(frequency);
         parcel.writeLong(rowId);
         parcel.writeInt(intFrequency);
-        parcel.writeLong(timeFrom);
-        parcel.writeLong(timeTo);
+        parcel.writeFloat(timeFrom);
+        parcel.writeFloat(timeTo);
         parcel.writeByte((byte) (monday ? 1 : 0));
         parcel.writeByte((byte) (tuesday ? 1 : 0));
         parcel.writeByte((byte) (wednesday ? 1 : 0));
@@ -82,7 +82,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         parcel.writeByte((byte) (notificationType ? 1 : 0));
         parcel.writeInt(messageId);
         parcel.writeByte((byte) (active ? 1 : 0));
-        parcel.writeInt(reminderId);
+//        parcel.writeInt(reminderId);
         parcel.writeList(messageDays);
         parcel.writeValue(localTimeFrom);
         parcel.writeValue(localTimeTo);
@@ -94,8 +94,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         frequency = in.readString();
         rowId = in.readLong();
         intFrequency = in.readInt();
-        timeFrom = in.readLong();
-        timeTo = in.readLong();
+        timeFrom = in.readFloat();
+        timeTo = in.readFloat();
         monday = in.readByte() != 0;
         tuesday = in.readByte() != 0;
         wednesday = in.readByte() != 0;
@@ -107,7 +107,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         notificationType = in.readByte() != 0;
         messageId = in.readInt();
         active = in.readByte() != 0;
-        reminderId = in.readInt();
+//        reminderId = in.readInt();
         messageDays = in.readArrayList(null);
         localTimeFrom = (LocalTime) in.readValue(null);
         localTimeTo = (LocalTime) in.readValue(null);
@@ -152,24 +152,24 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public int getFrequencyMinutes() { return (intFrequency / 60000); }
 
-    public long getTimeFrom() { return timeFrom; }
+    public float getTimeFrom() { return timeFrom; }
 
     public String getTimeFromAsString() {
-        Time time = new Time(timeFrom);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mm a");
-        String timeValue = simpleDateFormat.format(time);
-        return timeValue;
-        //return (time.toString()).substring(0,5);
+//        Time time = new Time(timeFrom);
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+//        String timeValue = simpleDateFormat.format(time);
+
+        return TimeUtil.FloatTimeToString(timeFrom);
     }
 
-    public long getTimeTo() { return timeTo; }
+    public float getTimeTo() { return timeTo; }
 
     public String getTimeToAsString() {
-        Time time = new Time(timeTo);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("h:mm a");
-        String timeValue = simpleDateFormat.format(time);
-        return timeValue;
-        //return (time.toString()).substring(0,5);
+//        Time time = new Time(timeTo);
+//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+//        String timeValue = simpleDateFormat.format(time);
+
+        return TimeUtil.FloatTimeToString(timeTo);
     }
 
     public boolean[] getDays() {
@@ -187,7 +187,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public long getAlarmTime() { return alarmTime; }
 
-    public int getReminderId() { return reminderId; }
+//    public int getReminderId() { return reminderId; }
 
     public boolean isActive() { return active; }
 
@@ -217,23 +217,11 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         sunday = sun; if (sunday) { messageDays.add(7); }
     }
 
-    public void setTimes(long from, long to) {
+    public void setTimes(float from, float to) {
         timeFrom = from;
         timeTo = to;
-        localTimeFrom = LocalTime.fromMillisOfDay(from);
-        localTimeTo = LocalTime.fromMillisOfDay(to);
-    }
-
-    public void setTimes(String from, String to) {
-        String stringFrom = from.substring(0, 4) + ":00";
-        String stringTo = to.substring(0, 4) + ":00";
-
-        Time time = Time.valueOf(stringFrom);
-        localTimeFrom = LocalTime.parse(stringFrom);
-        timeFrom = time.getTime();
-        time = Time.valueOf(stringTo);
-        localTimeTo = LocalTime.parse(stringTo);
-        timeTo = time.getTime();
+        localTimeFrom = LocalTime.fromMillisOfDay(TimeUtil.FloatTimeToMilliseconds(from));
+        localTimeTo = LocalTime.fromMillisOfDay(TimeUtil.FloatTimeToMilliseconds(to));
     }
 
     //the active flag indicates if the reminder currently is counting down
@@ -257,9 +245,9 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         messageId = iMessageId;
     }
 
-    public void setReminderId(int listPosition) {
-        reminderId = listPosition;
-    }
+//    public void setReminderId(int listPosition) {
+//        reminderId = listPosition;
+//    }
 
     public void setAlarmTime (long time) { alarmTime = time; }
 
@@ -348,6 +336,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         LocalTime localTime = LocalTime.now();
         LocalDate localDate = LocalDate.now();
 
+        //todo not working correctly, need to fix
         long currentTime = localTime.getMillisOfDay();
         long alarmNextTime = currentTime + intFrequency;
         long longTimeTo = localTimeTo.getMillisOfDay();
@@ -421,14 +410,14 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         return stringDays;
     }
 
-    public void update(Context context, boolean editedReminder){
+    public void update(Context context, boolean editedReminder, int position){
         DatabaseUtil db = new DatabaseUtil(context);
         db.open();
         db.updateRow(this);
         db.close();
         counter = new Time(intFrequency);
         if (editedReminder) {
-            SingletonDataArray.getInstance().updateReminder(this);
+            SingletonDataArray.getInstance().updateReminder(this, position);
         } else {
             SingletonDataArray.getInstance().addReminder(this);
         }
@@ -437,7 +426,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public void reload(Context context) {
         DatabaseUtil db = new DatabaseUtil(context);
         db.open();
-        Cursor cursor = db.getRow(reminderId);
+        Cursor cursor = db.getRow(rowId);
         if (cursor.getCount() > 0) {
             cursor.moveToFirst();
         } else {
@@ -455,11 +444,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         saturday = cursor.getInt(DatabaseUtil.COLUMN_SATURDAY) > 0;
         sunday = cursor.getInt(DatabaseUtil.COLUMN_SUNDAY) > 0;
 
-        Time time;
-        time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_FROM));
-        timeFrom = time.getTime();
-        time = Time.valueOf(cursor.getString(DatabaseUtil.COLUMN_TIME_TO));
-        timeTo = time.getTime();
+        timeFrom = cursor.getFloat(DatabaseUtil.COLUMN_TIME_FROM);
+        timeTo = cursor.getFloat(DatabaseUtil.COLUMN_TIME_TO);
 
         reminderUseType = cursor.getInt(DatabaseUtil.COLUMN_RECURRING) > 0;
         notificationType = cursor.getInt(DatabaseUtil.COLUMN_NOTIFICATION_TYPE) > 0;
