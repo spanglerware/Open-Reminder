@@ -54,14 +54,14 @@ public class AlarmService extends IntentService {
 //        alarmIntent.putExtra("messageId", messageId);
         alarmIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
         PendingIntent contentIntent = PendingIntent.getActivity(this, reminderId, alarmIntent,
-                PendingIntent.FLAG_UPDATE_CURRENT);
+                PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder alarmNotificationBuilder = new NotificationCompat.Builder(
         this).setContentTitle("Remind Me")
             .setSmallIcon(R.drawable.pencil)
             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.r_logo))
             .setStyle(new NotificationCompat.BigTextStyle().bigText(reminder))
-            .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000})
+            .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000, 1000})
             .setLights(Color.RED, 3000, 3000)
             .setDefaults(Notification.DEFAULT_SOUND)
             .setTicker(reminder)

@@ -527,6 +527,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
             float minTextX = normalizedToScreen(normalizedMinValue) - minTextWidth * 0.5f;
             float maxTextX = normalizedToScreen(normalizedMaxValue) - maxTextWidth * 0.5f;
 
+            //todo needs more work to prevent overlap
             if (pressedThumb == Thumb.MIN) {
                 if ((maxTextX - minTextX) < 200) {
                     if (minTextX > 200) {

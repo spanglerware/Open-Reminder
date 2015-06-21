@@ -35,7 +35,7 @@ import java.util.Map;
 
 public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     private LayoutInflater layoutInflater;
-    private ArrayList<Reminder> mItems;
+    //private ArrayList<Reminder> mItems;
     private final Context mContext;
     private HashMap<Integer,TextView> counterMap;
     protected ListView mListView;
@@ -64,7 +64,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         super();
         //super(context, data, resource, from, to);
         layoutInflater = LayoutInflater.from(context);
-        mItems = SingletonDataArray.getInstance().getDataArray();
+        //mItems = SingletonDataArray.getInstance().getDataArray();
         mContext = context;
         counterMap = new HashMap<Integer,TextView>();
         mListView = listView;
@@ -73,16 +73,24 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
     public int getCount() {
+        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         return mItems.size();
     }
 
     public Reminder getItem(int position) {
+        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         return mItems.get(position);
     }
 
     public long getItemId(int position) {
         return position;
     }
+
+//    @Override
+//    public void notifyDataSetChanged() {
+//        mItems = SingletonDataArray.getInstance().getDataArray();
+//        super.notifyDataSetChanged();
+//    }
 
 
     @Override
@@ -138,6 +146,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         final TextView tvT = holder.tvHolderTimes;
 //        final TextView tvN = holder.tvHolderNotType;
 
+        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         Reminder item = mItems.get(position);
 
         tvRow.setText(String.valueOf(item.getRowId()));
@@ -157,6 +166,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
     public boolean reduceCounters(long interval) {
+        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         int listSize = mItems.size();
         boolean complete = false;
         Reminder item;
@@ -170,13 +180,14 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         return complete;
     }
 
-    public void removeItem(int position) {
-        mItems.remove(position);
-    }
+//    public void removeItem(int position) {
+//        mItems.remove(position);
+//    }
 
     private View.OnClickListener mOnStartClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         final int position = mListView.getPositionForView((View) view.getParent());
         Reminder reminder = mItems.get(position);
 
@@ -185,7 +196,8 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             mStarted = false;
             reminderCallbacks.cancelReminderCallBack(reminder);
         } else {
-            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() + reminder.getIntFrequency());
+            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() +
+                    TimeUtil.FloatTimeToMilliseconds(reminder.getFloatFrequency()));
             setButtonImage(false, view);
             mStarted = true;
             reminderCallbacks.startReminderCallBack(reminder);
@@ -246,7 +258,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
     public void refresh() {
-        mItems = SingletonDataArray.getInstance().getDataArray();
+        //mItems = SingletonDataArray.getInstance().getDataArray();
         notifyDataSetChanged();
     }
 

@@ -45,6 +45,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         //this will send a notification message
 //        ComponentName comp = new ComponentName(context.getPackageName(), AlarmService.class.getName());
 //        startWakefulService(context, (intent.setComponent(comp)));
+
+
         Intent intentService = new Intent(context, AlarmService.class);
         intentService.putExtra("reminder", reminder);
         intentService.putExtra("reminderId", reminderId);
@@ -53,8 +55,8 @@ public class AlarmReceiver extends BroadcastReceiver {
         context.startService(intentService);
         setResultCode(Activity.RESULT_OK);
 
-        //todo make the toast bigger, can add lines to the reminder with more information
-        Toast.makeText(context, reminder, Toast.LENGTH_LONG).show();
+        String message = "Reminder: \n" + reminder;
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
         wakeLock.release();
     }
 

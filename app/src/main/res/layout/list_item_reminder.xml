@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<!-- Layout for weather forecast list item for future day (not today) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/container_all"
     android:layout_width="match_parent"
@@ -10,7 +9,6 @@
     android:minHeight="?android:attr/listPreferredItemHeight"
     android:background="@drawable/list_selector"
     android:orientation="vertical">
-
 
     <LinearLayout
         android:id="@+id/container_primary"
@@ -39,7 +37,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
-            android:paddingLeft="30dp"
+            android:paddingLeft="10dp"
             android:layout_weight="3"
             android:fontFamily="sans-serif-condensed"
             android:textAppearance="?android:textAppearanceLarge" />
@@ -50,11 +48,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="right"
-            android:paddingRight="30dp"
+            android:paddingRight="12dp"
             android:layout_gravity="center_vertical"
             android:layout_weight="1"
             android:fontFamily="sans-serif-condensed"/>
-            <!--android:textAppearance="?android:textAppearanceLarge"-->
 
     </LinearLayout>
 
@@ -68,11 +65,23 @@
         android:visibility="gone"
         android:orientation="horizontal">
 
+
+        <Button
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="22dp"
+            android:layout_marginEnd="13dp"
+            android:layout_marginTop="20dp"
+            android:id="@+id/button_edit"
+            android:background="@drawable/pencil"
+            />
+
+
         <LinearLayout
             android:id="@+id/container_secondary_textviews"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:paddingLeft="10dp"
             android:layout_marginBottom="4dp"
             android:animateLayoutChanges="true"
             android:orientation="vertical">
@@ -82,8 +91,6 @@
                 android:text="New Text"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:paddingLeft="30dp"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
@@ -93,30 +100,15 @@
                 android:text="New Text"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:paddingLeft="30dp"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
-
-            <!--<TextView-->
-                <!--android:id="@+id/list_item_reminder_notification_type"-->
-                <!--android:text="New Text"-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="fill_parent"-->
-                <!--android:layout_weight="1"-->
-                <!--android:paddingLeft="30dp"-->
-                <!--android:fontFamily="sans-serif-condensed"-->
-                <!--android:layout_marginBottom="6dp"-->
-                <!--android:textAppearance="?android:textAppearanceSmall"/>-->
 
             <TextView
                 android:id="@+id/list_item_reminder_times"
                 android:text="New Text"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
-                android:layout_weight="1"
-                android:paddingLeft="30dp"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
@@ -125,87 +117,29 @@
 
         <LinearLayout
             android:id="@+id/container_buttons"
-            android:layout_width="fill_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="2"
             android:animateLayoutChanges="true"
             android:layout_marginBottom="16dp"
-            android:orientation="horizontal">
-
-            <!--<Button-->
-                <!--android:layout_width="30dp"-->
-                <!--android:layout_height="60dp"-->
-                <!--android:layout_weight="1"-->
-                <!--android:text="Start"-->
-                <!--android:id="@+id/button_ghost_1"-->
-                <!--android:layout_gravity="left"-->
-                <!--android:onClick="goStartReminder"-->
-                <!--android:visibility="invisible"-->
-                <!--style="@style/button_green" />-->
+            android:paddingLeft="30dp"
+            android:orientation="vertical">
 
             <Button
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_weight="1"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:id="@+id/button_start"
-                android:layout_gravity="right"
-                android:layout_marginBottom="16dp"
-                android:layout_marginEnd="20dp"
+                android:layout_gravity="center_horizontal"
                 android:background="@drawable/play2"/>
-                <!--style="@style/button_green" -->
-            <!--android:text="Start"-->
-            <!--android:fontFamily="sans-serif-condensed"-->
-            <!--android:textAppearance="?android:textAppearanceSmall"-->
-
-            <!--<Button-->
-                <!--android:layout_width="60dp"-->
-                <!--android:layout_height="60dp"-->
-                <!--android:layout_weight="20"-->
-                <!--android:text="Start"-->
-                <!--android:id="@+id/button_ghost_2"-->
-                <!--android:layout_gravity="left"-->
-                <!--android:onClick="goStartReminder"-->
-                <!--android:visibility="invisible"-->
-                <!--style="@style/button_green" />-->
-    <!-- -->
 
             <Button
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_weight="1"
-                android:id="@+id/button_edit"
-                android:layout_gravity="right"
-                android:layout_marginEnd="20dp"
-                android:layout_marginBottom="16dp"
-                android:background="@drawable/pencil"
-                />
-
-            <!--android:text="Edit"-->
-            <!--android:fontFamily="sans-serif-condensed"-->
-            <!--android:textAppearance="?android:textAppearanceSmall"-->
-            <!--style="@style/button"-->
-
-            <Button
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:layout_weight="1"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:id="@+id/button_delete"
-                android:layout_gravity="right"
-                android:layout_marginEnd="20dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="10dp"
                 android:background="@drawable/cancel_circle"
                 />
 
-
-            <!--<Button-->
-                <!--android:layout_width="30dp"-->
-                <!--android:layout_height="60dp"-->
-                <!--android:layout_weight="1"-->
-                <!--android:text="Start"-->
-                <!--android:id="@+id/button_ghost_3"-->
-                <!--android:layout_gravity="left"-->
-                <!--android:onClick="goStartReminder"-->
-                <!--android:visibility="invisible"-->
-                <!--style="@style/button_green" />-->
         </LinearLayout>
 
     </LinearLayout>

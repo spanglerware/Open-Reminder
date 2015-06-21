@@ -28,6 +28,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 //    private int reminderId; //id of reminder that corresponds with position in dataArray
     private String reminder;
     private String frequency;
+    private float floatFrequency;
     private float timeFrom;
     private float timeTo;
 
@@ -36,28 +37,25 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     private boolean reminderUseType;  //true for recurring, false for single use
     private boolean notificationType;  //true for notification, false for alarm
     private int messageId; //this is the position of the alarm or notification sound setting
-    private long alarmTime;  //this time is when the next alarm is set for
+    private long alarmTime;  //this time is when the next alarm is set for, value is in calendar millis
 
     private boolean active;
     public boolean bSelected;
-    private Time counter;
+    private long counter;  //the counter is the current value of the countdown timer in milliseconds
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
-    private int intFrequency; //frequency in milliseconds
-
-    LocalTime localTimeFrom;
-    LocalTime localTimeTo;
 
 
     public Reminder (String rem, String freq, long id) {
         reminder = rem;
         frequency = freq;
-        intFrequency = Integer.parseInt(frequency);
+        floatFrequency = Float.parseFloat(frequency);
         rowId = id;
         active = false;
-        counter = new Time(intFrequency);
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
         messageDays = new ArrayList<Integer>();
         alarmTime = 0;
         bSelected = false;
+        reminderUseType = true;
     }
 
     public int describeContents() {
@@ -68,9 +66,10 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         parcel.writeString(reminder);
         parcel.writeString(frequency);
         parcel.writeLong(rowId);
-        parcel.writeInt(intFrequency);
+        parcel.writeFloat(floatFrequency);
         parcel.writeFloat(timeFrom);
         parcel.writeFloat(timeTo);
+        parcel.writeLong(counter);
         parcel.writeByte((byte) (monday ? 1 : 0));
         parcel.writeByte((byte) (tuesday ? 1 : 0));
         parcel.writeByte((byte) (wednesday ? 1 : 0));
@@ -84,8 +83,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         parcel.writeByte((byte) (active ? 1 : 0));
 //        parcel.writeInt(reminderId);
         parcel.writeList(messageDays);
-        parcel.writeValue(localTimeFrom);
-        parcel.writeValue(localTimeTo);
         parcel.writeLong(alarmTime);
     }
 
@@ -93,9 +90,10 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         reminder = in.readString();
         frequency = in.readString();
         rowId = in.readLong();
-        intFrequency = in.readInt();
+        floatFrequency = in.readFloat();
         timeFrom = in.readFloat();
         timeTo = in.readFloat();
+        counter = in.readLong();
         monday = in.readByte() != 0;
         tuesday = in.readByte() != 0;
         wednesday = in.readByte() != 0;
@@ -109,8 +107,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         active = in.readByte() != 0;
 //        reminderId = in.readInt();
         messageDays = in.readArrayList(null);
-        localTimeFrom = (LocalTime) in.readValue(null);
-        localTimeTo = (LocalTime) in.readValue(null);
         alarmTime = in.readLong();
     }
 
@@ -134,41 +130,36 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public String getFrequency() { return frequency; }
 
+//    public String getFormattedFrequency() {
+//        int hours, minutes, seconds;
+//        hours = intFrequency / (60 * 60 * 1000);
+//        minutes = (intFrequency % (60 * 60 * 1000)) / (60 * 1000);
+//        seconds = ((intFrequency % (60 * 60 * 1000)) % (60 * 1000) / 1000);
+//
+//        String formattedFreq = "";
+//        if (hours != 0) { formattedFreq = String.valueOf(hours) + ":"; }
+//        formattedFreq += String.format("%02d:%02d",
+//                minutes, seconds);
+//
+//        return formattedFreq;
+//    }
+
     public String getFormattedFrequency() {
-        int hours, minutes, seconds;
-        hours = intFrequency / (60 * 60 * 1000);
-        minutes = (intFrequency % (60 * 60 * 1000)) / (60 * 1000);
-        seconds = ((intFrequency % (60 * 60 * 1000)) % (60 * 1000) / 1000);
-
-        String formattedFreq = "";
-        if (hours != 0) { formattedFreq = String.valueOf(hours) + ":"; }
-        formattedFreq += String.format("%02d:%02d",
-                minutes, seconds);
-
-        return formattedFreq;
+        return TimeUtil.FloatTimeToStringHMS(floatFrequency);
     }
 
-    public int getIntFrequency() { return intFrequency; }
 
-    public int getFrequencyMinutes() { return (intFrequency / 60000); }
+    public float getFloatFrequency() { return floatFrequency; }
 
     public float getTimeFrom() { return timeFrom; }
 
     public String getTimeFromAsString() {
-//        Time time = new Time(timeFrom);
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-//        String timeValue = simpleDateFormat.format(time);
-
         return TimeUtil.FloatTimeToString(timeFrom);
     }
 
     public float getTimeTo() { return timeTo; }
 
     public String getTimeToAsString() {
-//        Time time = new Time(timeTo);
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
-//        String timeValue = simpleDateFormat.format(time);
-
         return TimeUtil.FloatTimeToString(timeTo);
     }
 
@@ -183,7 +174,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public int getMessageId() { return messageId; }
 
-    public long getCounter() { return counter.getTime(); }
+    public long getCounter() { return counter; }
 
     public long getAlarmTime() { return alarmTime; }
 
@@ -196,12 +187,14 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public void setFrequency(String stringFrequency) {
         frequency = stringFrequency;
-        intFrequency = Integer.parseInt(frequency) * 60000;
+        floatFrequency = Float.parseFloat(stringFrequency);
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
     }
 
-    public void setLongFrequency(int intFreq) {
-        intFrequency = intFreq;
-        frequency = String.valueOf(intFreq);
+    public void setFloatFrequency(float floatFreq) {
+        floatFrequency = floatFreq;
+        frequency = String.valueOf(floatFreq);
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
     }
 
     public void setDays(boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
@@ -220,27 +213,26 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public void setTimes(float from, float to) {
         timeFrom = from;
         timeTo = to;
-        localTimeFrom = LocalTime.fromMillisOfDay(TimeUtil.FloatTimeToMilliseconds(from));
-        localTimeTo = LocalTime.fromMillisOfDay(TimeUtil.FloatTimeToMilliseconds(to));
     }
 
     //the active flag indicates if the reminder currently is counting down
     public void setActive(boolean bActive) {
         active = bActive;
-        if (active) {
-            if (counter != null) {
-                counter.setTime(intFrequency);
-            } else {
-                counter = new Time(intFrequency);
-            }
-        } else {
-            // reset counter
-            counter.setTime(intFrequency);
-        }
+//        if (active) {
+//            if (counter != null) {
+//                counter.setTime(TimeUtil.FloatTimeToMilliseconds(floatFrequency));
+//            } else {
+//                counter = new Time(intFrequency);
+//            }
+//        } else {
+//            // reset counter
+//            counter.setTime(intFrequency);
+//        }
+        //counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
     }
 
     public void setMisc(boolean bUsageType, boolean bNotificationType, int iMessageId) {
-        reminderUseType = bUsageType;
+        reminderUseType = true; //todo may remove Misc data or comment out for now
         notificationType = bNotificationType;
         messageId = iMessageId;
     }
@@ -252,11 +244,11 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public void setAlarmTime (long time) { alarmTime = time; }
 
     public void startCounter() {
-        counter.setTime(intFrequency);
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
     }
 
     public String getCounterAsString() {
-        long time = counter.getTime();
+        long time = counter;
         String strTimer;
         if (time == 0) {
             strTimer = "";
@@ -295,13 +287,18 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     //reduce counter method is used to decrement the count down variable used to display the reminder time
     //todo countdown timers can get delayed based on when dialog is clicked, may need to refresh counters more often
     public boolean reduceCounter(long increment) {
-        long time = counter.getTime();
+        long time = counter;
+        boolean nextAlarm = false;
         if (active) {
             if (time <= 0) {
                 time = 0;
                 if (reminderUseType) {  //for a repeating reminder, set up next alarm
-                    int newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
-                    if (newTime == 0) { active = false; }
+                    long newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
+                    if (newTime == 0) {
+                        active = false;
+                    } else {
+                        nextAlarm = true;
+                    }
                     time = newTime;
                 } else {  //this is the case for a single use reminder
                     active = false;
@@ -309,9 +306,9 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
             } else {
                 time = time - increment;
             }
-            counter.setTime(time);
+            counter = time;
         }
-        return (time == 0);  //this indicates whether or not the timer has completed
+        return (nextAlarm);  //this indicates whether or not the timer has completed
     }
 
     //need an update method for the counter for when the app wakes from the background
@@ -321,7 +318,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         if (active) {
             long currentTime = calendar.getTimeInMillis();
             if (alarmTime > currentTime) {
-                counter.setTime(alarmTime - currentTime);
+                counter = alarmTime - currentTime;
             } else {
                 changed = true;
             }
@@ -331,26 +328,43 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
 
     //set up next alarm based on the class settings
-    private int scheduleNextAlarm() {
+    private long scheduleNextAlarm() {
+        //todo re-write to use float time for better tracking
         //first calculate next time for today, then check if it is in time range, then check for next days
         LocalTime localTime = LocalTime.now();
         LocalDate localDate = LocalDate.now();
 
         //todo not working correctly, need to fix
-        long currentTime = localTime.getMillisOfDay();
-        long alarmNextTime = currentTime + intFrequency;
-        long longTimeTo = localTimeTo.getMillisOfDay();
-        long longTimeFrom = localTimeFrom.getMillisOfDay();
+        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
+        float alarmNextTime = currentTime + floatFrequency;
 
+        Calendar calendar = Calendar.getInstance();
+        long currentCalendarTime = calendar.getTimeInMillis();
+
+        int today = localDate.getDayOfWeek();
         int tomorrow = localDate.getDayOfWeek() + 1;
         if (tomorrow > 7) { tomorrow = 1; }
         boolean found = false;
         int daysFromToday = 0;
-        int nextTime = 0;
+        float nextTime = 0;  //this value will be the next alarm time in float time
 
-        if (!messageDays.isEmpty() && alarmNextTime <= longTimeTo && alarmNextTime >= longTimeFrom) { //check to see if next alarm is within time range
-            nextTime = intFrequency;
-        } else if (!messageDays.isEmpty()) {  //check for next day to run alarm
+        //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
+        //also check if no days were selected for repeating
+        if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
+            active = false;
+            alarmTime = 0;
+            return 0;
+        }
+
+        //first check for today
+        if (messageDays.contains(today) && alarmNextTime < timeTo)  {
+            if (alarmNextTime <= timeFrom) {
+                nextTime = timeFrom + floatFrequency;
+            } else {
+                //schedule alarm normally
+                nextTime = alarmNextTime;
+            }
+        } else {  //check for next day to run alarm
             for (int i = tomorrow; i < 8; i++) {
                 if (messageDays.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
             }
@@ -359,17 +373,19 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
                     if (messageDays.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
                 }
             }
+            if (found) {
+                nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
+            } else {
+                active = false;
+                alarmTime = 0;
+                return 0;
+            }
         }
 
-        if (found) {
-            LocalDateTime time = LocalDateTime.now();
-            int currentMillis = time.getMillisOfDay();
+        nextTime -= currentTime;
+        alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentCalendarTime;
 
-            nextTime = (daysFromToday * 86400000) + localTimeFrom.getMillisOfDay() + intFrequency - currentMillis;
-        }
-        alarmTime = nextTime;
-        //else, leave nextTime as 0, will not schedule a next alarm
-        return nextTime;
+        return TimeUtil.FloatTimeToMilliseconds(nextTime);
     }
 
 
@@ -415,7 +431,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         db.open();
         db.updateRow(this);
         db.close();
-        counter = new Time(intFrequency);
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
         if (editedReminder) {
             SingletonDataArray.getInstance().updateReminder(this, position);
         } else {

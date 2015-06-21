@@ -204,7 +204,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         textViewFrequency.setText("Interval: " + mReminder.getFormattedFrequency());
         textViewFrequency.requestFocus();
 
-        frequency = mReminder.getIntFrequency();
+        frequency = TimeUtil.FloatTimeToMilliseconds(mReminder.getFloatFrequency());
         npHour = frequency / (60 * 60 * 1000);
         if (npHour > 0) { frequency -= npHour * 60 * 60 * 1000; }
         npMinute = frequency / (60 * 1000);
@@ -321,7 +321,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             public void onClick(DialogInterface dialog, int which) {
                 String hours = "";
                 int frequency = (npHour * 60 * 60 + npMinute * 60 + npSecond) * 1000;
-                mReminder.setLongFrequency(frequency);
+                mReminder.setFloatFrequency(TimeUtil.MillisecondsToFloatTime(frequency));
                 if (npHour != 0) { hours = String.valueOf(npHour) + ":"; }
                 textViewFrequency.setText("Interval: " + hours + String.format("%02d:%02d",
                         npMinute, npSecond));

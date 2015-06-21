@@ -8,9 +8,12 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.CountDownTimer;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
 import android.os.SystemClock;
@@ -33,6 +36,15 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -56,7 +68,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private Button btnStart;
     public ListView spinner;
 
-    ArrayList<Reminder> dataArray;
+    //ArrayList<Reminder> dataArray;
     MyAdapter myAdapter;
     Runnable timerRunnable;
     float xDown, xUp, yDown, yUp;
@@ -68,13 +80,9 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private static MainActivity inst;
 
 
-    //TODO display an alarm/notification screen/dialog if message fires while app is in background, currently stays in background
-
     //todo need icons for app and notification
 
     //todo clean up and comment code in main
-
-    //todo add random reminders using Notification CATEGORY_RECOMMENDATION
 
     //todo set layouts to scrollable or change property so landscape is disabled
 
@@ -85,6 +93,10 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         setContentView(R.layout.activity_main);
+        Log.v("onPause", "Main fired onCreate");
+
+        //todo temp fix, remove later
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         openDB();
 
@@ -134,6 +146,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             }
         });
 
+        //startFDMessage();
 
         //end of MainActivity onCreate
     }
@@ -162,8 +175,8 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     protected void onResume() {
         super.onResume();
         Log.v("onResume", "Main fired onResume");
+        //dataArray = SingletonDataArray.getInstance().getDataArray();
         updateReminders();
-        dataArray = SingletonDataArray.getInstance().getDataArray();
         myAdapter.notifyDataSetChanged();
     }
 
@@ -196,6 +209,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_add) {
+            ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
             Intent intent = new Intent(this, EditActivity.class);
             intent.putExtra("arrayId", dataArray.size());
             startActivity(intent);
@@ -239,13 +253,17 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             public void run() {
                 int interval = 1000;
                 timerHandler.postDelayed(this, interval); //run every second
-                for (Reminder reminder : dataArray) {
+                ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+                int arraySize = dataArray.size();
+                for (int i = 0; i < arraySize; i++) {
+                    Reminder reminder = dataArray.get(i);
                     if (reminder.isActive()) {
                         Log.v("active reminder counter", reminder.getCounterAsString());
                         if (reminder.reduceCounter(interval)) {
                             Log.v("reduced counter", reminder.getCounterAsString());
-                            //startReminder(reminder);
+                            startReminder(reminder);
                         }
+                        SingletonDataArray.getInstance().updateReminder(reminder, i);
                         myAdapter.notifyDataSetChanged();
                     }
                 }
@@ -274,11 +292,18 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         boolean reminderUseType;
         boolean notificationType;
         int messageId;
-        Time time;
+
+        //set up the custom adapter
+        spinner = (ListView) findViewById(R.id.listview_reminder);
+        myAdapter = new MyAdapter(getApplicationContext(), spinner, this);
+
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+        if (!dataArray.isEmpty()) {
+            return;
+        }
 
         Cursor cursor = myDb.getAllRows();
         int count = cursor.getCount();
-        dataArray = SingletonDataArray.getInstance().getDataArray();
 
         //set up last selected row
         spinnerDbId = myDb.getCurrentRowId();
@@ -316,9 +341,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                 cursor.moveToNext();
             }
         }
-        //set up the custom adapter
-        spinner = (ListView) findViewById(R.id.listview_reminder);
-        myAdapter = new MyAdapter(getApplicationContext(), spinner, this);
     }
 
     private void addItemsToSpinner() {
@@ -328,13 +350,11 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     private void updateReminders() {
         //todo controls are now in MyAdapter, need to update there
-
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         for (Reminder reminder : dataArray) {
             if (reminder.isActive()) {
-                if (reminder.updateCounter()) {
-
-                }
-                //myAdapter.reduceCounters(0);
+                reminder.updateCounter();
+                myAdapter.reduceCounters(0);
 //                if (!reminder.isActive()) {
 //                } else {
 //                }
@@ -352,6 +372,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         super.onActivityResult(requestCode, resultCode, this.getIntent());
 
         if (resultCode == Activity.RESULT_OK) {
+            ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
             Reminder reminder = data.getParcelableExtra("reminder");
             switch (requestCode) {
                 case (REQUEST_NEW): {
@@ -406,12 +427,13 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View viewSelected, int position, long idInDb) {
+                ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
                 Reminder item = dataArray.get(position);
                 spinnerReminder = item.getReminder();
                 spinnerDbId = item.getRowId();
                 spinnerRow = position;
 
-                if (item.isActive()){
+                if (item.isActive()) {
                     bStarted = true;
                 } else {
                     bStarted = false;
@@ -487,9 +509,15 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     }
 
     private void goEdit(int position) {
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         Intent intent = new Intent(this, EditActivity.class);
         Reminder reminder = dataArray.get(position);
-        reminder.setActive(false);
+
+        if (reminder.isActive()) {
+            reminder.setActive(false);
+            cancelReminder(reminder);
+        }
+
         intent.putExtra("reminder", reminder);
         intent.putExtra("position", position);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -497,11 +525,16 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     }
 
     private void goDelete(int position) {
-        //remove reminder from mItems
-        long reminderId = dataArray.get(position).getRowId();
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+        Reminder reminder = dataArray.get(position);
+        long reminderId = reminder.getRowId();
+
+        if (reminder.isActive()) { cancelReminder(reminder); }
+
+        //todo how does the below code affect the singleton? this could be causing the double removal
         dataArray.remove(position);
         //update reminder instance
-        SingletonDataArray.getInstance().removeReminder(position);
+        //SingletonDataArray.getInstance().removeReminder(position);
         myAdapter.notifyDataSetChanged();
 
         //remove from db
@@ -511,7 +544,9 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         myAdapter.refresh();
     }
 
+
     private void createDeleteDialog(final int position) {
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder
                 .setTitle("Confirm Delete")
@@ -531,6 +566,121 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         AlertDialog alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
+
+
+
+    //todo fd code, remove soon
+
+    class DownloadFileFromURL extends AsyncTask<String, String, String> {
+        private String message = "";
+        /**
+         * Before starting background thread Show Progress Bar Dialog
+         * */
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        /**
+         * Downloading file in background thread
+         * */
+        @Override
+        protected String doInBackground(String... f_url) {
+            int count;
+            try {
+                URL url = new URL(f_url[0]);
+                URLConnection conection = url.openConnection();
+                conection.connect();
+
+                // this will be useful so that you can show a tipical 0-100%
+                // progress bar
+                int lenghtOfFile = conection.getContentLength();
+
+                // download the file
+                InputStream input = new BufferedInputStream(url.openStream(),
+                        8192);
+
+                message = convertStreamToString(input);
+
+                // Output stream
+                OutputStream output = new FileOutputStream(Environment
+                        .getExternalStorageDirectory().toString()
+                        + "/fd.txt");
+
+                byte data[] = new byte[1024];
+
+                long total = 0;
+
+                while ((count = input.read(data)) != -1) {
+                    total += count;
+
+                    // writing data to file
+                    output.write(data, 0, count);
+                }
+
+                // flushing output
+                output.flush();
+
+                // closing streams
+                output.close();
+                input.close();
+
+            } catch (Exception e) {
+                Log.e("Error: ", e.getMessage());
+            }
+
+            return null;
+        }
+
+        /**
+         * Updating progress bar
+         * */
+        protected void onProgressUpdate(String... progress) {
+            // setting progress percentage
+
+        }
+
+        /**
+         * After completing background task Dismiss the progress dialog
+         * **/
+        @Override
+        protected void onPostExecute(String file_url) {
+            // dismiss the dialog after the file was downloaded
+//            if (message.equals("HFD")) {
+//                goPlayFD();
+//            }
+        }
+
+        public String convertStreamToString(InputStream is) throws IOException {
+          /*
+           * To convert the InputStream to String we use the BufferedReader.readLine()
+           * method. We iterate until the BufferedReader return null which means
+           * there's no more data to read. Each line will appended to a StringBuilder
+           * and returned as String.
+           */
+            if (is != null) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+                    while ((line = reader.readLine()) != null) {
+                        sb.append(line);
+                    }
+                } finally {
+                    is.close();
+                }
+                return sb.toString();
+            } else {
+                return "";
+            }
+        }
+
+    }
+
+
+
+
 
 
     //end of Main
