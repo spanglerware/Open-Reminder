@@ -152,16 +152,24 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         tvRow.setText(String.valueOf(item.getRowId()));
         tvR.setText(item.getReminder());
         tvC.setText(item.getCounterAsString());
-        tvF.setText("Timer: " + item.getFormattedFrequency());
+        String label = "";
+        if (item.getRecurring()) {
+            label = "Timer: ";
+            tvF.setText(label + item.getFormattedFrequency());
+            tvT.setVisibility(View.VISIBLE);
+            tvT.setText("Time: " + item.getTimeFromAsString() + " - " + item.getTimeToAsString());
+            //holder.llAll.setOrientation(LinearLayout.HORIZONTAL);
+        } else {
+            label = "Time: ";
+            tvF.setText(label + TimeUtil.FloatTimeToStringExact(item.getFloatFrequency()));
+            tvT.setText("");
+            tvT.setVisibility(View.GONE);
+        }
+
         tvD.setText("Days: " + item.getDaysAsString());
-        tvT.setText("Time: " + item.getTimeFromAsString() + " - " + item.getTimeToAsString());
 //        tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
 
-//        if (item.isActive()) {
-//            counterMap.put(position,tvC);
-//        }
         rowView.setTag(holder);
-
         return rowView;
     }
 
@@ -194,11 +202,11 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         if (mStarted) {
             setButtonImage(true, view);
             mStarted = false;
+            reminder.setActive(false);
             reminderCallbacks.cancelReminderCallBack(reminder);
         } else {
-            reminder.setAlarmTime(Calendar.getInstance().getTimeInMillis() +
-                    TimeUtil.FloatTimeToMilliseconds(reminder.getFloatFrequency()));
             setButtonImage(false, view);
+            reminder.setActive(true);
             mStarted = true;
             reminderCallbacks.startReminderCallBack(reminder);
         }
@@ -210,7 +218,14 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     private View.OnClickListener mOnEditClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
+            ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
+            View tempView = ((View) (view.getParent()).getParent());
             final int position = mListView.getPositionForView((View) view.getParent());
+            Reminder reminder = mItems.get(position);
+            TestViewHolder viewHolder = (TestViewHolder) tempView.getTag();
+
+            reminder.setActive(false);
+            setButtonImage(true, viewHolder.btnStart);
             reminderCallbacks.editReminderCallBack(position);
         }
     };
@@ -244,16 +259,12 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
     private void setButtonImage(boolean toStart, View view) {
-        Button buttonStart = (Button) view;
+        Button startButton = (Button) view;
 
         if (toStart) {
-            //buttonStart.setText("Start");
-            //buttonStart.setTextColor(Color.parseColor("#009400"));
-            buttonStart.setBackgroundResource(R.drawable.play2);
+            startButton.setBackgroundResource(R.drawable.play2);
         } else {
-            //buttonStart.setText("Stop");
-            //buttonStart.setTextColor(Color.RED);
-            buttonStart.setBackgroundResource(R.drawable.stop);
+            startButton.setBackgroundResource(R.drawable.stop);
         }
     }
 

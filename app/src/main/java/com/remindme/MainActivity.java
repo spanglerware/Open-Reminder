@@ -71,6 +71,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     //ArrayList<Reminder> dataArray;
     MyAdapter myAdapter;
     Runnable timerRunnable;
+    Handler timerHandler;
     float xDown, xUp, yDown, yUp;
 
     private String spinnerReminder;
@@ -79,8 +80,17 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     private static MainActivity inst;
 
+    //todo BUG cancelreminder does not cancel the pendingintent
 
-    //todo need icons for app and notification
+    //todo may need to implement onNewIntent
+
+    //todo need to implement onSaveInstanceState
+
+    //todo add color to UI
+
+    //todo remove log statements for release
+
+    //todo need smaller icons for app and notification
 
     //todo clean up and comment code in main
 
@@ -94,9 +104,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         super.onCreate(bundle);
         setContentView(R.layout.activity_main);
         Log.v("onPause", "Main fired onCreate");
-
-        //todo temp fix, remove later
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
         openDB();
 
@@ -146,7 +153,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             }
         });
 
-        //startFDMessage();
 
         //end of MainActivity onCreate
     }
@@ -190,6 +196,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     protected void onDestroy(){
         super.onDestroy();
         closeDb();
+        timerHandler.removeCallbacks(timerRunnable);
         Log.v("onDestroy", "Main fired onDestroy");
     }
 
@@ -247,13 +254,14 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     //this handler sets up a countdown timer for the reminders in the spinner
     private void callHandler() {
-        final Handler timerHandler = new Handler();
+        timerHandler = new Handler();
         timerRunnable = new Runnable() {
             @Override
             public void run() {
                 int interval = 1000;
                 timerHandler.postDelayed(this, interval); //run every second
                 ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+
                 int arraySize = dataArray.size();
                 for (int i = 0; i < arraySize; i++) {
                     Reminder reminder = dataArray.get(i);
@@ -394,9 +402,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private void startReminder(Reminder reminder) {
         int reminderId = (int) reminder.getRowId();
         long alarmTime = reminder.getAlarmTime();
-        reminder.setActive(true);
         bStarted = true;
-        //setButtonImage(false);
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlarmReceiver.class);

@@ -52,7 +52,7 @@ public class AlarmService extends IntentService {
 //        alarmIntent.putExtra("reminder", reminder);
 //        alarmIntent.putExtra("messageId", reminderId);
 //        alarmIntent.putExtra("messageId", messageId);
-        alarmIntent.addFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT);
+        alarmIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
         PendingIntent contentIntent = PendingIntent.getActivity(this, reminderId, alarmIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
 

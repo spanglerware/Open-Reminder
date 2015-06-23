@@ -185,16 +185,11 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public void setReminder(String stringReminder) { reminder = stringReminder; }
 
-    public void setFrequency(String stringFrequency) {
-        frequency = stringFrequency;
-        floatFrequency = Float.parseFloat(stringFrequency);
-        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
-    }
-
     public void setFloatFrequency(float floatFreq) {
         floatFrequency = floatFreq;
         frequency = String.valueOf(floatFreq);
-        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+
+        resetCounter();
     }
 
     public void setDays(boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
@@ -218,21 +213,13 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     //the active flag indicates if the reminder currently is counting down
     public void setActive(boolean bActive) {
         active = bActive;
-//        if (active) {
-//            if (counter != null) {
-//                counter.setTime(TimeUtil.FloatTimeToMilliseconds(floatFrequency));
-//            } else {
-//                counter = new Time(intFrequency);
-//            }
-//        } else {
-//            // reset counter
-//            counter.setTime(intFrequency);
-//        }
-        //counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+
+        resetCounter();
+        alarmTime = System.currentTimeMillis() + counter;
     }
 
     public void setMisc(boolean bUsageType, boolean bNotificationType, int iMessageId) {
-        reminderUseType = true; //todo may remove Misc data or comment out for now
+        reminderUseType = bUsageType;
         notificationType = bNotificationType;
         messageId = iMessageId;
     }
@@ -240,6 +227,21 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 //    public void setReminderId(int listPosition) {
 //        reminderId = listPosition;
 //    }
+
+    public void resetCounter() {
+        LocalTime localTime = LocalTime.now();
+        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
+
+        if (reminderUseType) {
+            counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+        } else {
+            if (floatFrequency >= currentTime) {
+                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime);
+            } else {
+                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime + 24);
+            }
+        }
+    }
 
     public void setAlarmTime (long time) { alarmTime = time; }
 
@@ -252,8 +254,12 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         String strTimer;
         if (time == 0) {
             strTimer = "";
+        } else if (!reminderUseType && !active) {
+            strTimer = TimeUtil.FloatTimeToStringExact(floatFrequency);
         } else {
-            //todo will need to add days to strTimer
+            //todo counter display not always working correctly
+
+            //todo if single use display static time if not active
             long days = TimeUnit.MILLISECONDS.toDays(time);
             long hours = TimeUnit.MILLISECONDS.toHours(time) -
                     TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(time));
@@ -289,34 +295,30 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public boolean reduceCounter(long increment) {
         long time = counter;
         boolean nextAlarm = false;
+        Log.v("reduceCounter start", "active: " + active + ", counter: " + counter);
         if (active) {
             if (time <= 0) {
-                time = 0;
-                if (reminderUseType) {  //for a repeating reminder, set up next alarm
-                    long newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
-                    if (newTime == 0) {
-                        active = false;
-                    } else {
-                        nextAlarm = true;
-                    }
-                    time = newTime;
-                } else {  //this is the case for a single use reminder
+                long newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
+                if (newTime == 0) {
                     active = false;
+                } else {
+                    nextAlarm = true;
                 }
+                time = newTime;
             } else {
                 time = time - increment;
             }
             counter = time;
         }
+        Log.v("reduceCounter end", "counter: " + counter + ", next alarm: " + nextAlarm);
         return (nextAlarm);  //this indicates whether or not the timer has completed
     }
 
     //need an update method for the counter for when the app wakes from the background
     public boolean updateCounter() {
         boolean changed = false;
-        Calendar calendar = Calendar.getInstance();
         if (active) {
-            long currentTime = calendar.getTimeInMillis();
+            long currentTime = System.currentTimeMillis();
             if (alarmTime > currentTime) {
                 counter = alarmTime - currentTime;
             } else {
@@ -329,61 +331,89 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     //set up next alarm based on the class settings
     private long scheduleNextAlarm() {
-        //todo re-write to use float time for better tracking
         //first calculate next time for today, then check if it is in time range, then check for next days
         LocalTime localTime = LocalTime.now();
         LocalDate localDate = LocalDate.now();
 
         //todo not working correctly, need to fix
         float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
-        float alarmNextTime = currentTime + floatFrequency;
-
-        Calendar calendar = Calendar.getInstance();
-        long currentCalendarTime = calendar.getTimeInMillis();
+        float alarmNextTime;
+        long currentSystemTime = System.currentTimeMillis();
 
         int today = localDate.getDayOfWeek();
         int tomorrow = localDate.getDayOfWeek() + 1;
         if (tomorrow > 7) { tomorrow = 1; }
         boolean found = false;
+        boolean exit = false;
         int daysFromToday = 0;
         float nextTime = 0;  //this value will be the next alarm time in float time
 
-        //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
-        //also check if no days were selected for repeating
-        if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
+
+        //todo need to simplify this code, too many returns from within
+        if (!reminderUseType) {
+            if (floatFrequency >= currentTime) {
+                nextTime = floatFrequency;
+            } else if (messageDays.isEmpty()) {
+                exit = true;
+            } else {
+                for (int i = tomorrow; i < 8; i++) {
+                    if (messageDays.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
+                }
+                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
+                    for (int i = 1; i < tomorrow; i++) {
+                        if (messageDays.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
+                    }
+                }
+                nextTime = (floatFrequency + (24 * daysFromToday));
+            }
+        } else {
+            alarmNextTime = currentTime + floatFrequency;
+
+            //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
+            //also check if no days were selected for repeating
+            if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
+                exit = true;
+            }
+
+            //first check for today
+            if (messageDays.contains(today) && alarmNextTime < timeTo) {
+                if (alarmNextTime <= timeFrom) {
+                    nextTime = timeFrom + floatFrequency;
+                } else {
+                    //schedule alarm normally
+                    nextTime = alarmNextTime;
+                }
+            } else {  //check for next day to run alarm
+                for (int i = tomorrow; i < 8; i++) {
+                    if (messageDays.contains(i)) {
+                        found = true;
+                        daysFromToday = i - tomorrow + 1;
+                        break;
+                    }
+                }
+                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
+                    for (int i = 1; i < tomorrow; i++) {
+                        if (messageDays.contains(i)) {
+                            found = true;
+                            daysFromToday = 7 - tomorrow + i + 1;
+                            break;
+                        }
+                    }
+                }
+                if (found) {
+                    nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
+                }
+            }
+        }
+
+        if (exit) {
             active = false;
             alarmTime = 0;
             return 0;
         }
 
-        //first check for today
-        if (messageDays.contains(today) && alarmNextTime < timeTo)  {
-            if (alarmNextTime <= timeFrom) {
-                nextTime = timeFrom + floatFrequency;
-            } else {
-                //schedule alarm normally
-                nextTime = alarmNextTime;
-            }
-        } else {  //check for next day to run alarm
-            for (int i = tomorrow; i < 8; i++) {
-                if (messageDays.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
-            }
-            if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                for (int i = 1; i < tomorrow; i++) {
-                    if (messageDays.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
-                }
-            }
-            if (found) {
-                nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
-            } else {
-                active = false;
-                alarmTime = 0;
-                return 0;
-            }
-        }
-
         nextTime -= currentTime;
-        alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentCalendarTime;
+        alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentSystemTime;
 
         return TimeUtil.FloatTimeToMilliseconds(nextTime);
     }

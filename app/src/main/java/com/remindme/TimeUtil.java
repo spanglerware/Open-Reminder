@@ -7,6 +7,8 @@ public class TimeUtil {
 
     private TimeUtil () {}
 
+    //todo re-write FloatTimeToString functions into one method with parameters
+
     public static String FloatTimeToString(float timeValue) {
         boolean flag = false;
         String timeText;
@@ -65,5 +67,38 @@ public class TimeUtil {
         return formattedFreq;
     }
 
+    public static String FloatTimeToStringExact(float timeValue) {
+        boolean flag = false;
+        String timeText = "";
+
+        if (timeValue == 24) { return "12:00 am"; }
+
+        int hours = (int) Math.floor(timeValue);
+        int minutes = (int) Math.floor((timeValue - hours) * 60);
+        int seconds = (int) Math.floor((timeValue - hours - (minutes / 60.0f)) * 3600);
+        if (seconds > 60) {
+            seconds -= 60;
+            minutes += 1;
+        }
+        if (minutes > 60) {
+            minutes -= 60;
+            hours += 1;
+        }
+        if (hours == 12) {
+            flag = true;
+        } else if (hours > 12) {
+            hours -= 12;
+            flag = true;
+        }
+
+        timeText = String.format("%01d:%02d:%02d", hours, minutes, seconds);
+        if (flag) {
+            timeText += " pm";
+        } else {
+            timeText += " am";
+        }
+
+        return timeText;
+    }
 
 } //end of TimeUtil class

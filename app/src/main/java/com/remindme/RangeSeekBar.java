@@ -72,6 +72,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     private double normalizedMinValue = 0d;
     private double normalizedMaxValue = 1d;
     private Thumb pressedThumb = null;
+    private Thumb previousPressed = null;
     private boolean notifyWhileDragging = false;
     private OnRangeSeekBarChangeListener<T> listener;
     /**
@@ -355,6 +356,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
                     onStopTrackingTouch();
                 }
 
+                previousPressed = pressedThumb;
                 pressedThumb = null;
                 invalidate();
                 if (listener != null) {
@@ -475,8 +477,10 @@ public class RangeSeekBar<T extends Number> extends ImageView {
         mRect.right = getWidth() - padding;
         canvas.drawRect(mRect, paint);
 
-        boolean selectedValuesAreDefault = (getSelectedMinValue().equals(getAbsoluteMinValue()) &&
-                getSelectedMaxValue().equals(getAbsoluteMaxValue()));
+        //todo selectedValuesAreDefault causing problems, disabled for now
+//        boolean selectedValuesAreDefault = (getSelectedMinValue().equals(getAbsoluteMinValue()) &&
+//                getSelectedMaxValue().equals(getAbsoluteMaxValue()));
+        boolean selectedValuesAreDefault = false;
 
         int colorToUseForButtonsAndHighlightedLine = selectedValuesAreDefault ?
                 Color.GRAY :    // default values
@@ -529,15 +533,21 @@ public class RangeSeekBar<T extends Number> extends ImageView {
 
             //todo needs more work to prevent overlap
             if (pressedThumb == Thumb.MIN) {
-                if ((maxTextX - minTextX) < 200) {
-                    if (minTextX > 200) {
-                        minTextX = maxTextX - 200;
-                    }
+                if ((maxTextX - minTextX) < 70) {
+                    minTextX = maxTextX - 70;
                 }
             } else if (pressedThumb == Thumb.MAX) {
-                if ((maxTextX - minTextX) < 200) {
-                    if (maxTextX > 500) {
-                        maxTextX = minTextX + 200;
+                if ((maxTextX - minTextX) < 70) {
+                    maxTextX = minTextX + 70;
+                }
+                //todo need more conditions around edges
+            } else if (pressedThumb == null) {
+                if ((maxTextX - minTextX) < 70) {
+                    //todo set up or condition for thumb close to edge
+                    if (previousPressed == Thumb.MIN) {
+                        minTextX = maxTextX - 70;
+                    } else {
+                        maxTextX = minTextX + 70;
                     }
                 }
             }
@@ -547,7 +557,6 @@ public class RangeSeekBar<T extends Number> extends ImageView {
                         minTextX,
                         mDistanceToTop + mTextSize,
                         paint);
-
             }
 
             canvas.drawText(maxText,
@@ -597,7 +606,9 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     private void drawThumb(float screenCoord, boolean pressed, Canvas canvas, boolean areSelectedValuesDefault) {
         Bitmap buttonToDraw;
         if (areSelectedValuesDefault) {
-            buttonToDraw = thumbDisabledImage;
+            //todo disabled image causing problems, set to thumbImage for now
+            //buttonToDraw = thumbDisabledImage;
+            buttonToDraw = thumbImage;
         } else {
             buttonToDraw = pressed ? thumbPressedImage : thumbImage;
         }

@@ -62,6 +62,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private boolean friday;
     private boolean saturday;
     private boolean sunday;
+    private boolean useType;  //false for single time, true for repeating
 
     private Button buttonMonday;
     private Button buttonTuesday;
@@ -71,6 +72,9 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private Button buttonSaturday;
     private Button buttonSunday;
     private RangeSeekBar<Float> rangeBar;
+    private TextView rangebarLabel;
+    private RadioButton radioButtonSingle;
+    private RadioButton radioButtonRepeat;
 
     private ArrayList<String> alarms;
     private ArrayList<Integer> alarmsResId;
@@ -85,9 +89,15 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private boolean editReminder;
     private Reminder mReminder;
     private int mListPosition;
-//    private TextView tvTimeMin;
-//    private TextView tvTimeMax;
 
+
+    //todo add scrollview for landscape
+
+    //todo select use type option for new reminders
+
+    //todo reduce text size, add more padding
+
+    //todo implement am/pm in numberpicker for single use times
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -147,6 +157,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         super.onPause();
         mReminder.setReminder(etReminder.getText().toString());
         mReminder.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
+        mReminder.setMisc(useType, false, 0);
         mReminder.update(this, editReminder, mListPosition);
     }
 
@@ -190,7 +201,9 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     public void assignObjects() {
         etReminder = (EditText) findViewById(R.id.edittext_reminder);
         textViewFrequency = (TextView) findViewById(R.id.edittext_frequency);
-//        spinnerSelectAlarm = (Spinner) findViewById(R.id.spinnerSelectAlarm);
+        rangebarLabel = (TextView) findViewById(R.id.rangebar_label);
+        radioButtonSingle = (RadioButton) findViewById(R.id.radioButton_single_time);
+        radioButtonRepeat = (RadioButton) findViewById(R.id.radioButton_repeat);
     }
 
     //load in data to edit from the Reminder sent to this activity
@@ -201,7 +214,17 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         editId = mReminder.getRowId();
 
         etReminder.setText(mReminder.getReminder());
-        textViewFrequency.setText("Interval: " + mReminder.getFormattedFrequency());
+        useType = mReminder.getRecurring();
+
+        String label = "";
+        if (useType) {
+            label = "Interval: ";
+            radioButtonRepeat.setChecked(true);
+        } else {
+            label = "Time: ";
+            radioButtonSingle.setChecked(true);
+        }
+        textViewFrequency.setText(label + mReminder.getFormattedFrequency());
         textViewFrequency.requestFocus();
 
         frequency = TimeUtil.FloatTimeToMilliseconds(mReminder.getFloatFrequency());
@@ -227,7 +250,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         sunday = days[6];
         if (sunday) { buttonSunday.setBackgroundResource(R.drawable.border_style_button_on); }
 
-        if (mReminder.getRecurring()) {
+        if (useType) {
             //setTimeRangeVisibility(true);
         } else {
             //setTimeRangeVisibility(false);
@@ -248,24 +271,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         mReminder.setMisc(false, false, 0);
         db.close();
 
-    }
-
-
-    //save information to database if save button selected
-    public void goSaveReminder(View view) {
-        mReminder.setReminder(etReminder.getText().toString());
-        mReminder.setFrequency(textViewFrequency.getText().toString());
-        //times are updated in updateTimes method
-        //days are updated EditDaysActivity or in goSelectDays
-        //reminder.setMisc(radioRecurring.isChecked(),radioNotification.isChecked(),
-//        spinnerSelectAlarm.getSelectedItemPosition());
-
-        Intent data = getIntent();
-        data.putExtra("reminder", mReminder);
-        setResult(RESULT_OK, data);
-        finish();
-
-        //end of goSaveReminder
     }
 
     @Override
@@ -291,16 +296,22 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private void showNumberPickerDialog() {
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.activity_select_time, null);
+        String label = "";
+        if (useType) {
+            label = "Select Time Interval: ";
+        } else {
+            label = "Select Time: ";
+        }
 
         final AlertDialog.Builder dialog = new AlertDialog.Builder(EditActivity.this);
-        dialog.setTitle("Select Time Interval");
+        dialog.setTitle(label);
         final NumberPicker numberPickerHours = (NumberPicker) dialogView.findViewById(
                 R.id.number_picker_hours);
         final NumberPicker numberPickerMinutes = (NumberPicker) dialogView.findViewById(
                 R.id.number_picker_minutes);
         final NumberPicker numberPickerSeconds = (NumberPicker) dialogView.findViewById(
                 R.id.number_picker_seconds);
-        numberPickerHours.setMaxValue(24);
+        numberPickerHours.setMaxValue(23);
         numberPickerMinutes.setMaxValue(59);
         numberPickerSeconds.setMaxValue(59);
         numberPickerHours.setWrapSelectorWheel(true);
@@ -320,10 +331,16 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String hours = "";
+                String label = "";
+                if (useType) {
+                    label = "Interval: ";
+                } else {
+                    label = "Time: ";
+                }
                 int frequency = (npHour * 60 * 60 + npMinute * 60 + npSecond) * 1000;
                 mReminder.setFloatFrequency(TimeUtil.MillisecondsToFloatTime(frequency));
                 if (npHour != 0) { hours = String.valueOf(npHour) + ":"; }
-                textViewFrequency.setText("Interval: " + hours + String.format("%02d:%02d",
+                textViewFrequency.setText(label + hours + String.format("%02d:%02d",
                         npMinute, npSecond));
                 dialog.dismiss();
             }
@@ -440,6 +457,27 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonSunday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         sunday = !sunday;
+    }
+
+    public void goSelectUse(View view) {
+        textViewFrequency.setText("");
+        switch (view.getId()) {
+            case R.id.radioButton_single_time:
+                textViewFrequency.setHint("Select Time");
+                rangebarLabel.setVisibility(View.GONE);
+                rangeBar.setVisibility(View.GONE);
+                radioButtonSingle.setChecked(true);
+                useType = false;
+                break;
+            case R.id.radioButton_repeat:
+                textViewFrequency.setHint("Select Time Interval");
+                rangebarLabel.setVisibility(View.VISIBLE);
+                rangeBar.setVisibility(View.VISIBLE);
+                radioButtonRepeat.setChecked(true);
+                useType = true;
+                break;
+        }
+
     }
 
 
