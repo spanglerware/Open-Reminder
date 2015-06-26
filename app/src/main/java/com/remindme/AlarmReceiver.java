@@ -10,6 +10,11 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.PowerManager;
 import android.support.v4.content.WakefulBroadcastReceiver;
+import android.view.Gravity;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 /**
@@ -55,11 +60,27 @@ public class AlarmReceiver extends BroadcastReceiver {
         context.startService(intentService);
         setResultCode(Activity.RESULT_OK);
 
-        String message = "Reminder: \n" + reminder;
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        //String message = "Reminder: \n" + reminder;
+        //Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+        showNotification(context, reminder);
         wakeLock.release();
     }
 
+
+    private void showNotification(Context context, String message) {
+        LayoutInflater mInflater = LayoutInflater.from(context);
+        View myView = mInflater.inflate(R.layout.notification_popup, null);
+
+        TextView text = (TextView) myView.findViewById(R.id.notification_text);
+        text.setTextSize(24);
+        text.setText("Reminder: \n" + message);
+
+        Toast toast = new Toast(context);
+        toast.setGravity(Gravity.CENTER_VERTICAL, 0, 0);
+        toast.setDuration(Toast.LENGTH_LONG);
+        toast.setView(myView);
+        toast.show();
+    }
 
     //end of AlarmReceiver class
 }

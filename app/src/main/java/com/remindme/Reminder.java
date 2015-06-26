@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
+import android.view.View;
 
 import org.joda.time.LocalDate;
 import org.joda.time.LocalDateTime;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  * Created by Scott on 4/26/2015.
  */
 public class Reminder implements Parcelable {  //implements parcelable so the data can be sent between activities
-    public static boolean mSelected;
+    public static boolean mOpened = false;
 
     private long rowId;  //id of reminder in the database
 //    private int reminderId; //id of reminder that corresponds with position in dataArray
@@ -43,6 +44,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     public boolean bSelected;
     private long counter;  //the counter is the current value of the countdown timer in milliseconds
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
+    public int visibility = View.GONE;
 
 
     public Reminder (String rem, String freq, long id) {
@@ -56,6 +58,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         alarmTime = 0;
         bSelected = false;
         reminderUseType = true;
+        //visibility = View.GONE;
     }
 
     public int describeContents() {
@@ -130,6 +133,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public String getFrequency() { return frequency; }
 
+    public boolean getOpened() { return mOpened; }
+
 //    public String getFormattedFrequency() {
 //        int hours, minutes, seconds;
 //        hours = intFrequency / (60 * 60 * 1000);
@@ -190,6 +195,10 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         frequency = String.valueOf(floatFreq);
 
         resetCounter();
+    }
+
+    public void setOpened(boolean opened) {
+        mOpened = opened;
     }
 
     public void setDays(boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
@@ -259,7 +268,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         } else {
             //todo counter display not always working correctly
 
-            //todo if single use display static time if not active
             long days = TimeUnit.MILLISECONDS.toDays(time);
             long hours = TimeUnit.MILLISECONDS.toHours(time) -
                     TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(time));
@@ -291,7 +299,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     }
 
     //reduce counter method is used to decrement the count down variable used to display the reminder time
-    //todo countdown timers can get delayed based on when dialog is clicked, may need to refresh counters more often
     public boolean reduceCounter(long increment) {
         long time = counter;
         boolean nextAlarm = false;
@@ -335,7 +342,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         LocalTime localTime = LocalTime.now();
         LocalDate localDate = LocalDate.now();
 
-        //todo not working correctly, need to fix
         float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
         float alarmNextTime;
         long currentSystemTime = System.currentTimeMillis();
@@ -348,8 +354,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         int daysFromToday = 0;
         float nextTime = 0;  //this value will be the next alarm time in float time
 
-
-        //todo need to simplify this code, too many returns from within
         if (!reminderUseType) {
             if (floatFrequency >= currentTime) {
                 nextTime = floatFrequency;
@@ -440,7 +444,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         if (weekdayCounter + weekendCounter == 7) {stringDays = "All Week";
         } else if (weekdayCounter == 5 && weekendCounter == 0) {stringDays = "M-F";
         } else if (weekdayCounter == 0 && weekendCounter == 2) {stringDays = "Weekend";
-        //todo what happens if nothing selected? could return just today
         } else {
             for (int i = 0; i < 7; i++) {if (!days[i].isEmpty()) {firstDay = i; break;}}
             if (firstDay != -1) {
@@ -500,6 +503,20 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         db.close();
     }
 
+    public int getVisibility() {
+        return visibility;
+    }
+
+    public void toggleVisibility()
+    {
+        if(visibility==View.GONE) {
+            visibility = View.VISIBLE;
+            mOpened = true;
+        } else {
+            visibility = View.GONE;
+            mOpened = false;
+        }
+    }
 
 
 }   //end of Reminder class

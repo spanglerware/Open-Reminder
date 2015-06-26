@@ -13,7 +13,7 @@
     <LinearLayout
         android:id="@+id/container_primary"
         android:layout_height="wrap_content"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_weight="1"
         android:layout_marginTop="16dp"
         android:layout_marginBottom="8dp"
@@ -25,7 +25,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="New Text"
+            android:text="@string/list_item_placeholder"
             android:id="@+id/list_item_reminder_id"
             android:paddingLeft="30dp"
             android:textColor="@android:color/black"
@@ -33,19 +33,19 @@
 
         <TextView
             android:id="@+id/list_item_reminder_text"
-            android:text="New Text"
-            android:layout_width="wrap_content"
+            android:text="@string/list_item_placeholder"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:paddingLeft="10dp"
-            android:layout_weight="3"
+            android:layout_weight="1"
             android:fontFamily="sans-serif-condensed"
             android:textAppearance="?android:textAppearanceLarge" />
 
         <TextView
             android:id="@+id/list_item_reminder_counter"
-            android:text="New Text"
-            android:layout_width="wrap_content"
+            android:text="@string/list_item_placeholder"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="right"
             android:paddingRight="12dp"
@@ -57,14 +57,13 @@
 
     <LinearLayout
         android:id="@+id/container_secondary"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layout_marginBottom="4dp"
         android:animateLayoutChanges="true"
         android:visibility="gone"
         android:orientation="horizontal">
-
 
         <Button
             android:layout_width="25dp"
@@ -75,7 +74,6 @@
             android:id="@+id/button_edit"
             android:background="@drawable/pencil"
             />
-
 
         <LinearLayout
             android:id="@+id/container_secondary_textviews"
@@ -88,27 +86,27 @@
 
             <TextView
                 android:id="@+id/list_item_reminder_frequency"
-                android:text="New Text"
+                android:text="@string/list_item_placeholder"
                 android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
+                android:layout_height="match_parent"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
 
             <TextView
                 android:id="@+id/list_item_reminder_days"
-                android:text="New Text"
+                android:text="@string/list_item_placeholder"
                 android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
+                android:layout_height="match_parent"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>
 
             <TextView
                 android:id="@+id/list_item_reminder_times"
-                android:text="New Text"
+                android:text="@string/list_item_placeholder"
                 android:layout_width="wrap_content"
-                android:layout_height="fill_parent"
+                android:layout_height="match_parent"
                 android:fontFamily="sans-serif-condensed"
                 android:layout_marginBottom="6dp"
                 android:textAppearance="?android:textAppearanceSmall"/>

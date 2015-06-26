@@ -24,7 +24,8 @@
         </activity>
 
         <activity android:name=".EditActivity"
-            android:label="Edit Activity"></activity>
+            android:label="Edit Activity"
+            android:windowSoftInputMode="stateHidden"></activity>
 
         <service android:name=".AlarmService"
             android:enabled="true" ></service>

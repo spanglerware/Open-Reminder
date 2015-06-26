@@ -4,4 +4,21 @@
     <string name="action_settings">Settings</string>
     <string name="demo_min_label">Min</string>
     <string name="demo_max_label">Max</string>
+    <string name="edit_reminder_hint">Enter Reminder</string>
+    <string name="edit_radio_single">Time of Day</string>
+    <string name="edit_radio_repeat">Timer</string>
+    <string name="edit_frequency_hint">Select Timer Interval</string>
+    <string name="edit_select_days_label">Select Days</string>
+    <string name="edit_monday">Mo</string>
+    <string name="edit_tuesday">Tu</string>
+    <string name="edit_wednesday">We</string>
+    <string name="edit_thursday">Th</string>
+    <string name="edit_friday">Fr</string>
+    <string name="edit_saturday">Sa</string>
+    <string name="edit_sunday">Su</string>
+    <string name="edit_rangebar_label">Select Time Range</string>
+    <string name="select_time_hours">Hours</string>
+    <string name="select_time_minutes">Minutes</string>
+    <string name="select_time_seconds">Seconds</string>
+    <string name="list_item_placeholder">New Text</string>
 </resources>

@@ -11,14 +11,13 @@
     android:paddingLeft="10dp"
     android:paddingRight="10dp"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
+    android:layout_height="wrap_content">
 
     <EditText
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/edittext_reminder"
-        android:hint="Enter Reminder"
+        android:hint="@string/edit_reminder_hint"
         android:textAppearance="?android:textAppearanceLarge"
         android:layout_marginBottom="10dp"
         android:layout_marginTop="20dp"
@@ -27,30 +26,29 @@
     <RadioGroup
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-
         >
 
         <RadioButton
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/radioButton_single_time"
-            android:text="Time of Day"
+            android:text="@string/edit_radio_single"
             android:textAppearance="?android:textAppearanceLarge"
             android:onClick="goSelectUse" />
         <RadioButton
-            android:layout_width="fill_parent"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/radioButton_repeat"
-            android:text="Timer"
+            android:text="@string/edit_radio_repeat"
             android:textAppearance="?android:textAppearanceLarge"
             android:onClick="goSelectUse" />
     </RadioGroup>
 
     <TextView
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/edittext_frequency"
-        android:hint="Select Timer Interval"
+        android:hint="@string/edit_frequency_hint"
         android:textAppearance="?android:textAppearanceLarge"
         android:layout_marginBottom="30dp"
         android:layout_marginTop="20dp"
@@ -58,32 +56,24 @@
         android:onClick="goSelectFrequency"
         />
 
-    <!--<CheckBox-->
-        <!--android:layout_width="fill_parent"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:id="@+id/checkbox_repeat"-->
-        <!--android:text="Repeat?"-->
-        <!--android:textAppearance="?android:textAppearanceLarge"-->
-        <!--android:layout_marginBottom="30dp"-->
-        <!--/>-->
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Select Days"
+        android:text="@string/edit_select_days_label"
         android:textAppearance="?android:textAppearanceLarge"
         android:layout_marginBottom="5dp"
         />
 
     <LinearLayout
         android:orientation="horizontal"
-        android:layout_width="fill_parent"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        style="?android:attr/buttonBarButtonStyle"
         android:layout_marginBottom="30dp">
 
         <Button
             android:id="@+id/toggle_monday"
-            android:text="Mo"
+            android:text="@string/edit_monday"
             android:onClick="goToggleMonday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -91,7 +81,7 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_tuesday"
-            android:text="Tu"
+            android:text="@string/edit_tuesday"
             android:onClick="goToggleTuesday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -99,7 +89,7 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_wednesday"
-            android:text="We"
+            android:text="@string/edit_wednesday"
             android:onClick="goToggleWednesday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -107,7 +97,7 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_thursday"
-            android:text="Th"
+            android:text="@string/edit_thursday"
             android:onClick="goToggleThursday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -115,7 +105,7 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_friday"
-            android:text="Fr"
+            android:text="@string/edit_friday"
             android:onClick="goToggleFriday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -123,7 +113,7 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_saturday"
-            android:text="Sa"
+            android:text="@string/edit_saturday"
             android:onClick="goToggleSaturday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
@@ -131,47 +121,23 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/toggle_sunday"
-            android:text="Su"
+            android:text="@string/edit_sunday"
             android:onClick="goToggleSunday"
             android:layout_weight="1"
             android:background="@drawable/border_style_button_off"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
-
-
-
     </LinearLayout>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/rangebar_label"
-        android:text="Select Time Range"
+        android:text="@string/edit_rangebar_label"
         android:textAppearance="?android:textAppearanceLarge"
         android:layout_marginBottom="5dp"
         />
 
-
-    <!--<LinearLayout-->
-        <!--android:orientation="horizontal"-->
-        <!--android:paddingLeft="10dp"-->
-        <!--android:paddingRight="10dp"-->
-        <!--android:layout_width="fill_parent"-->
-        <!--android:layout_height="wrap_content">-->
-        <!--<TextView-->
-            <!--android:id="@+id/time_range_min"-->
-            <!--android:hint="Range From"-->
-            <!--android:layout_weight="1"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content" />-->
-
-        <!--<TextView-->
-            <!--android:id="@+id/time_range_max"-->
-            <!--android:hint="Range To"-->
-            <!--android:layout_weight="1"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content" />-->
-    <!--</LinearLayout>-->
-
     </LinearLayout>
+
 </ScrollView>

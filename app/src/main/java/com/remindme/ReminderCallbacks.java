@@ -5,9 +5,9 @@ package com.remindme;
  */
 public interface ReminderCallbacks {
 
-    public void startReminderCallBack(Reminder reminder);
+    public void startReminderCallBack(int position);
 
-    public void cancelReminderCallBack(Reminder reminder);
+    public void cancelReminderCallBack(int position);
 
     public void deleteReminderCallBack(int position);
 

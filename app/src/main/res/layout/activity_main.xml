@@ -8,16 +8,13 @@
     android:orientation="vertical"
     tools:ignore="MergeRootFrame">
 
-
     <ListView
         android:id="@+id/listview_reminder"
         android:layout_weight="1"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:scrollbars="none"
         android:descendantFocusability="afterDescendants"
         android:divider="@null" />
-    <!--android:paddingLeft="20dp"-->
-    <!--android:paddingRight="20dp"-->
 
 </LinearLayout>
