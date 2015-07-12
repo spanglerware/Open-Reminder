@@ -1,71 +1,45 @@
 package com.remindme;
 
-import android.animation.LayoutTransition;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.IntentFilter;
 import android.database.Cursor;
-import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.CountDownTimer;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.PowerManager;
-import android.os.SystemClock;
-import android.support.v4.content.WakefulBroadcastReceiver;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.URL;
-import java.net.URLConnection;
-import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends ActionBarActivity implements ReminderCallbacks {
 
     private static final int REQUEST_NEW = 0;
     private static final int REQUEST_EDIT = 1;
+    private static final int RUNNABLE_INTERVAL = 1000;  //runnable set to 1 second delay
 
     private DatabaseUtil myDb;
-    private ReminderCallbacks reminderCallbacks;
 
     private boolean bSelected;
+    private boolean edited = false;
 
-    private Button btnStart;
     public ListView spinner;
 
     //ArrayList<Reminder> dataArray;
@@ -74,23 +48,20 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     Handler timerHandler;
     float xDown, xUp, yDown, yUp;
 
-    private String spinnerReminder;
     private long spinnerDbId;
     private int spinnerRow;
 
     private static MainActivity inst;
 
-    //todo BUG visibility behavior after delete not working correctly?
 
-    //todo BUG counter reduction to 0 calls next alarm, should be event from service
+    //todo BUG alarmTime not writing correctly to db
 
-    //todo BUG active flag not loading, counters not starting
+    //TODO BUG app destroyed not able to trigger alarm? or schedule next alarm? sometimes works, sometimes not
+    //TODO FIX? could set additional alarms for each day selected and set up to use repeating alarms
 
-    //todo BUG start and cancel buttons showing at different areas due to content wrap
+    //todo BUG alarmReceiver not able to change start button if no next alarm
 
-    //todo BUG start stop buttons not showing correctly, or counter not working correctly
-
-    //todo save active flag in db upon start/stop reminder?
+    //todo BUG float rounding causing time display to be sometimes off a second
 
     //todo need to implement onSaveInstanceState
 
@@ -109,9 +80,15 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         setContentView(R.layout.activity_main);
         Log.v("onPause", "Main fired onCreate");
 
+//        getSupportActionBar().setDisplayUseLogoEnabled(true);
+//        getSupportActionBar().setDisplayShowHomeEnabled(true);
+//        getSupportActionBar().setIcon(R.drawable.menu_logo);
+
+
         openDB();
 
         bSelected = false;
+        spinnerRow = -1;
 
         fillDataArray();
         addItemsToSpinner();
@@ -126,29 +103,24 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             }
         });
 
+        IntentFilter filter = new IntentFilter(AlarmService.ACTION);
+
         //end of MainActivity onCreate
     }
 
     private void setViewVisibilities(int position) {
-        int selected = MyAdapter.selectedId;
-        spinnerRow = position;
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-        Reminder reminder = dataArray.get(position);
+        int selected = spinnerRow;
+        Reminder reminder = myAdapter.getItem(position);
         if (reminder.getOpened()) {
-            if (selected == position) {
-                reminder.toggleVisibility();
-            } else if (selected == -1) {
+            if (selected == -1) {
                 closeAllReminders();
-            } else {
-                Reminder previous = dataArray.get(selected);
+            } else if (selected != position) {
+                Reminder previous = myAdapter.getItem(selected);
                 previous.toggleVisibility();
-                reminder.toggleVisibility();
-                MyAdapter.selectedId = position;
             }
-        } else {
-            reminder.toggleVisibility();
-            MyAdapter.selectedId = position;
         }
+        reminder.toggleVisibility();
+        spinnerRow = position;
 
         myAdapter.notifyDataSetChanged();
         spinner.setSelection(position);
@@ -156,10 +128,11 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     @Override
     protected void onPause() {
-        //wakeLock.release();
         super.onPause();
         Log.v("onPause", "Main fired onPause");
         //from documentation: When an activity's onPause() method is called, it should commit to the backing content provider or file any changes the user has made.
+
+        //todo write data from singleton to database here?
     }
 
     @Override
@@ -180,6 +153,12 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         Log.v("onResume", "Main fired onResume");
         //dataArray = SingletonDataArray.getInstance().getDataArray();
         updateReminders();
+        if (spinnerRow >= 0 && edited) {
+            Reminder reminder = myAdapter.getItem(spinnerRow);
+            reminder.visibility = View.VISIBLE;
+            spinner.setSelection(spinnerRow);
+            edited = false;
+        }
         myAdapter.notifyDataSetChanged();
     }
 
@@ -206,17 +185,13 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        // Handle action bar item clicks here.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_add) {
-            //todo could add getSize method to singleton
-            ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
             Intent intent = new Intent(this, EditActivity.class);
-            intent.putExtra("arrayId", dataArray.size());
+            intent.putExtra("editType", false);
+            intent.putExtra("arrayId", myAdapter.getCount());
             startActivity(intent);
             return true;
         }
@@ -256,22 +231,14 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         timerRunnable = new Runnable() {
             @Override
             public void run() {
-                int interval = 1000;
-                boolean reduced = false;
+                int interval = RUNNABLE_INTERVAL;
                 timerHandler.postDelayed(this, interval); //run every second
-                ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
 
-                int arraySize = dataArray.size();
+                int arraySize = myAdapter.getCount();
                 for (int i = 0; i < arraySize; i++) {
-                    Reminder reminder = dataArray.get(i);
+                    Reminder reminder = myAdapter.getItem(i);
                     if (reminder.isActive()) {
-                        Log.v("active reminder counter", reminder.getCounterAsString());
-                        reduced = reminder.reduceCounter(interval);
-                        SingletonDataArray.getInstance().updateReminder(reminder, i);
-                        if (reduced) {
-                            Log.v("reduced counter", reminder.getCounterAsString());
-                            startReminder(i);
-                        }
+                        reminder.reduceCounter(interval);
                         myAdapter.notifyDataSetChanged();
                     }
                 }
@@ -300,6 +267,8 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         boolean reminderUseType;
         boolean notificationType;
         int messageId;
+        boolean active;
+        long alarmTime;
 
         //set up the custom adapter
         spinner = (ListView) findViewById(R.id.listview_reminder);
@@ -323,7 +292,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                 rowId = cursor.getLong(DatabaseUtil.COLUMN_ROWID);
                 frequency = cursor.getString(DatabaseUtil.COLUMN_FREQUENCY);
                 reminder = cursor.getString(DatabaseUtil.COLUMN_REMINDER);
-                if (rowId == spinnerDbId) { spinnerRow = i + 1; spinnerReminder = reminder; }
+                if (rowId == spinnerDbId) { spinnerRow = i + 1; }
 
                 timeFrom = cursor.getFloat(DatabaseUtil.COLUMN_TIME_FROM);
                 timeTo = cursor.getFloat(DatabaseUtil.COLUMN_TIME_TO);
@@ -339,31 +308,33 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                 reminderUseType = cursor.getInt(DatabaseUtil.COLUMN_RECURRING) > 0;
                 notificationType = cursor.getInt(DatabaseUtil.COLUMN_NOTIFICATION_TYPE) > 0;
                 messageId = cursor.getInt(DatabaseUtil.COLUMN_MESSAGE);
+                active = cursor.getInt(DatabaseUtil.COLUMN_ACTIVE) > 0;
+                alarmTime = cursor.getLong(DatabaseUtil.COLUMN_ALARM_TIME);
 
-                Reminder item = new Reminder(reminder, frequency, rowId);
-                item.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
-                item.setTimes(timeFrom, timeTo);
-                item.setMisc(reminderUseType, notificationType, messageId);
+                Reminder item = new Reminder(i, reminder, frequency, rowId, timeFrom, timeTo, monday, tuesday, wednesday, thursday,
+                        friday, saturday, sunday, reminderUseType, notificationType, messageId, active, alarmTime);
                 dataArray.add(i, item);
 
                 cursor.moveToNext();
             }
         }
+        updateReminders();
     }
 
     private void addItemsToSpinner() {
         spinner.setAdapter(myAdapter);
-        spinner.setSelection(spinnerRow);
+        //spinner.setSelection(spinnerRow);
     }
 
+    //todo need to examine this update for refactoring
     private void updateReminders() {
         ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         for (Reminder reminder : dataArray) {
             if (reminder.isActive()) {
                 reminder.updateCounter();
-                myAdapter.reduceCounters(0);
             }
         }
+        myAdapter.reduceCounters(0);
     }
 
     private void displayToast(String text){
@@ -371,57 +342,33 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data){
-        super.onActivityResult(requestCode, resultCode, this.getIntent());
-
-        if (resultCode == Activity.RESULT_OK) {
-            ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-            Reminder reminder = data.getParcelableExtra("reminder");
-            switch (requestCode) {
-                case (REQUEST_NEW): {
-                        //result is from successful insert of new reminder
-                        dataArray.add(reminder);
-                    break;
-                }
-                case (REQUEST_EDIT): {
-                        //result is from successful edit
-                        dataArray.set(spinnerRow, reminder);
-                    break;
-                }
-            }
-            myDb.updateRow(reminder);
-        }
-    }
-
-
     private void startReminder(int position) {
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-        Reminder reminder = dataArray.get(position);
+        Reminder reminder = myAdapter.getItem(position);
         reminder.setActive(true);
-        SingletonDataArray.getInstance().updateReminder(reminder, position);
-        myDb.updateRow(reminder);
 
-        int reminderId = (int) reminder.getRowId();
+        int rowId = (int) reminder.getRowId();
         long alarmTime = reminder.getAlarmTime();
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+        //alarmIntent.setAction("com.remindme.action.ALARM_INDEF");
         alarmIntent.putExtra("reminder", reminder.getReminder());
-        alarmIntent.putExtra("reminderId", reminderId);
-        alarmIntent.putExtra("messageId", reminder.getMessageId());
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId,
+        alarmIntent.putExtra("rowId", rowId);
+        alarmIntent.putExtra("useType", reminder.getUseType());
+        alarmIntent.putExtra("frequency", reminder.getFloatFrequency());
+        alarmIntent.putExtra("days", reminder.getMessageDays());
+        alarmIntent.putExtra("timeFrom", reminder.getTimeFrom());
+        alarmIntent.putExtra("timeTo", reminder.getTimeTo());
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, rowId,
                 alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
+        //todo change to repeating? NO, unable to do so because times can change based on days selected
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
     }
 
     private void cancelReminder(int position) {
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-        Reminder reminder = dataArray.get(position);
+        Reminder reminder = myAdapter.getItem(position);
         reminder.setActive(false);
-        SingletonDataArray.getInstance().updateReminder(reminder, position);
-        myDb.updateRow(reminder);
 
         int reminderId = (int) reminder.getRowId();
 
@@ -430,48 +377,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, reminderId, alarmIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         alarmManager.cancel(pendingIntent);
         Log.v("cancelReminder", "Cancelling ...");
-    }
-
-    private void registerSpinnerSelectionEvent() {
-        xDown = 0;
-        xUp = 0;
-        yDown = 0;
-        yUp = 0;
-
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View viewSelected, int position, long idInDb) {
-                ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-                Reminder item = dataArray.get(position);
-                spinnerReminder = item.getReminder();
-                spinnerDbId = item.getRowId();
-                spinnerRow = position;
-
-                MyAdapter.TestViewHolder viewHolder = (MyAdapter.TestViewHolder) viewSelected.getTag();
-
-                //set visibility of child views to expand or contract selection
-                if (!bSelected) {
-//                    viewHolder.tvHolderNotType.setVisibility(View.VISIBLE);
-                    viewHolder.tvHolderTimes.setVisibility(View.VISIBLE);
-                    viewHolder.tvHolderDays.setVisibility(View.VISIBLE);
-                    viewHolder.tvHolderFrequency.setVisibility(View.VISIBLE);
-
-                } else {
-//                    viewHolder.tvHolderNotType.setVisibility(View.GONE);
-                    viewHolder.tvHolderTimes.setVisibility(View.GONE);
-                    viewHolder.tvHolderDays.setVisibility(View.GONE);
-                    viewHolder.tvHolderFrequency.setVisibility(View.GONE);
-
-                }
-                bSelected = !bSelected;
-                myDb.changeCurrent(spinnerDbId);
-            }
-
-            public void onNothingSelected(AdapterView<?> arg0) {
-                //no updates needed
-            }
-        });
-
     }
 
     private void registerSpinnerOnTouchEvent() {
@@ -506,14 +411,8 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                         }
 
                         if (Math.abs(yDown - yUp) > 50) {
-                            //set an adapter flag in order to close expanded list item when list scrolled
-
-                            //todo set up another condition if item is last in the list view
-                            //if (spinnerRow != spinner.getCount() - 1) {
-                            myAdapter.listMoved = true;
                             closeAllReminders();
                             myAdapter.notifyDataSetChanged();
-                            //}
                         }
                         break;
                     }
@@ -523,53 +422,57 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         });
     }
 
-    private void registerSpinnerOnLongClickEvent() {
-        spinner.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-            @Override
-            public boolean onItemLongClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-                //call edit activity, send intent data with db rowId, activityforresult
-                return true;
-            }
-        });
-    }
-
     private void goEdit(int position) {
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         Intent intent = new Intent(this, EditActivity.class);
-        Reminder reminder = dataArray.get(position);
+        Reminder reminder = myAdapter.getItem(position);
 
         if (reminder.isActive()) {
             reminder.setActive(false);
             cancelReminder(position);
         }
+        reminder.visibility = View.GONE;
 
-        intent.putExtra("reminder", reminder);
-        intent.putExtra("position", position);
+        intent.putExtra("editType", true);
+        intent.putExtra("arrayId", position);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        //startActivityForResult(intent, REQUEST_EDIT);
         startActivity(intent);
+
+        edited = true;
     }
 
     private void goDelete(int position) {
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
-        Reminder reminder = dataArray.get(position);
+        Reminder reminder = myAdapter.getItem(position);
         long reminderId = reminder.getRowId();
 
         if (reminder.isActive()) { cancelReminder(position); }
-        dataArray.remove(position);
+        myAdapter.removeItem(position);
+        spinnerRow = -1;
+        closeAllReminders();
         myAdapter.notifyDataSetChanged();
 
         //remove from db
         myDb.deleteRow(reminderId);
+
+        //re-index reminders in dataArray
+        reIndexArray();
     }
 
+    private void reIndexArray() {
+        int size = myAdapter.getCount();
+        Reminder reminder;
+        for (int i = 0; i < size; i++) {
+            reminder = myAdapter.getItem(i);
+            reminder.setIndexId(i);
+        }
+    }
 
     private void createDeleteDialog(final int position) {
-        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
         alertDialogBuilder
                 .setTitle("Confirm Delete")
                 .setMessage("Would you like to delete the reminder: " +
-                        dataArray.get(position).getReminder())
+                        myAdapter.getItem(position).getReminder())
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialogInterface, int id) {
@@ -585,7 +488,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         alertDialog.show();
     }
 
-
     private void closeAllReminders() {
         ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         for (Reminder reminder : dataArray) {
@@ -593,6 +495,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             reminder.setOpened(false);
         }
     }
+
 
     //end of Main
 }

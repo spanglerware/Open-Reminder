@@ -71,17 +71,13 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private RadioButton radioButtonSingle;
     private RadioButton radioButtonRepeat;
 
-    private ArrayList<String> alarms;
-    private ArrayList<Integer> alarmsResId;
-    private ArrayList<String> notifications;
-
     private int npHour;
     private int npMinute;
     private int npSecond;
-    private int dialogFlag;
+    private float minTime;
+    private float maxTime;
 
-    private long editId;
-    private boolean editReminder;
+    private boolean editReminder;  //false means new reminder, true means edited reminder
     private Reminder mReminder;
     private int mListPosition;
 
@@ -102,55 +98,63 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         //load interface with data in case of an edit
         Intent intent = getIntent();
-        mReminder = intent.getParcelableExtra("reminder");
-        mListPosition = intent.getIntExtra("position", 0);
+        editReminder = intent.getBooleanExtra("editType", false);
+        mListPosition = intent.getIntExtra("arrayId", -1);
+        if (mListPosition < 0) { finish(); }
 
-        if (mReminder != null) {
-            editReminder = true;
+        if (editReminder) {
+            mReminder = SingletonDataArray.getInstance().getDataArray().get(mListPosition);
             loadEditData();
         } else {
-            editReminder = false;
-            int arrayId = intent.getIntExtra("arrayId", -1);
-            createNewReminder(arrayId);
+            createNewReminder(mListPosition);
         }
+
+        minTime = mReminder.getTimeFrom();
+        maxTime = mReminder.getTimeTo();
 
         //todo move to assignObjects method, use stored values
         rangeBar = new RangeSeekBar<Float>(this);
         rangeBar.setRangeValues(0.0f, 24.0f);
         rangeBar.setSelectedMinValue(9.0f);
         rangeBar.setSelectedMaxValue(17.0f);
-        rangeBar.setPadding(10,0,10,0);
+        rangeBar.setPadding(10, 0, 10, 0);
 
         rangeBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Float>() {
             @Override
             public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Float minValue, Float maxValue) {
-
-            mReminder.setTimes(minValue, maxValue);
+                minTime = minValue;
+                maxTime = maxValue;
             }
         });
 
         ViewGroup container = (ViewGroup) findViewById(R.id.edit_container);
         container.addView(rangeBar);
 
-        rangeBar.setSelectedMinValue(mReminder.getTimeFrom());
-        rangeBar.setSelectedMaxValue(mReminder.getTimeTo());
+        rangeBar.setSelectedMinValue(minTime);
+        rangeBar.setSelectedMaxValue(maxTime);
 
         setUse();
         textViewFrequency.requestFocus();
-        dialogFlag = 0;
 
     }  //end of 0nCreate
 
     @Override
     public void onPause() {
         super.onPause();
-        mReminder.setReminder(etReminder.getText().toString());
-        mReminder.setDays(monday, tuesday, wednesday, thursday, friday, saturday, sunday);
-        mReminder.setMisc(useType, false, 0);
-        mReminder.update(this, editReminder, mListPosition);
+        mReminder.updateValues(etReminder.getText().toString(), minTime, maxTime, monday, tuesday, wednesday, thursday,
+                friday, saturday, sunday, useType, false, 0, false, 0);
+        mReminder.editUpdate(editReminder, mListPosition);
+
+        //todo if reminder blank may either assign "blank reminder" value or show dialog asking to save or delete
     }
 
-
+//    @Override
+//    public void onBackPressed() {
+//        Log.d("edit onbackpressed", "getting called");
+//        Intent mIntent = new Intent();
+//        setResult(RESULT_OK, mIntent);
+//        super.onBackPressed();
+//    }
 
     public void assignObjects() {
         etReminder = (EditText) findViewById(R.id.edittext_reminder);
@@ -163,9 +167,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     //load in data to edit from the Reminder sent to this activity
     private void loadEditData() {
         int frequency;
-
         boolean[] days = mReminder.getDays();
-        editId = mReminder.getRowId();
 
         etReminder.setText(mReminder.getReminder());
         useType = mReminder.getRecurring();
@@ -208,15 +210,14 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private void createNewReminder(int arrayId) {
         //create a new record in the database with default values
         //todo may want to change default values for reminder, frequency, and days
-        DatabaseUtil db = new DatabaseUtil(this);
+        DatabaseUtil db = new DatabaseUtil();
         db.open();
         long rowId = db.insertRow("", "0", 9.0f, 17.0f, false, false, false, false,
-                false, false, false, false, false, 0);
-        mReminder = new Reminder("", "0", rowId);
-        mReminder.setTimes(9.0f, 17.0f);
-        mReminder.setDays(false, false, false, false, false, false, false);
-        mReminder.setMisc(false, false, 0);
+                false, false, false, false, false, 0, false, 0);
+        mReminder = new Reminder(arrayId, "", "0", rowId, 9.0f, 17.0f, false, false, false,
+                false, false, false, false, false, false, 0, false, 0);
         radioButtonSingle.setChecked(true);
+
         db.close();
     }
 
@@ -272,7 +273,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         numberPickerSeconds.setValue(npSecond);
 
         dialog.setView(dialogView);
-        //dialog.setCancelable(false);
 
         dialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override

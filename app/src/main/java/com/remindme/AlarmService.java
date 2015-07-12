@@ -1,5 +1,6 @@
 package com.remindme;
 
+import android.app.Activity;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -12,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -23,7 +25,7 @@ public class AlarmService extends IntentService {
     private NotificationManager alarmNotificationManager;
     private static final int NOTIFICATION_ID = 1;
     private PendingIntent pendingIntent;
-
+    public static final String ACTION = "com.remindme.AlarmService";
 
     public AlarmService() {
         super("Alarm Service");
@@ -41,24 +43,18 @@ public class AlarmService extends IntentService {
         alarmNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 
         String reminder = intent.getStringExtra("reminder");
-        int reminderId = intent.getIntExtra("reminderId", 1);
-        int messageId = intent.getIntExtra("messageId", 1);
-//        String msg = "Wake Up! Wake Up!";
-
-        //displayToast(reminder);
+        int rowId = intent.getIntExtra("rowId", 1);
 
         //set up Alarm or Notification activity screen
         Intent alarmIntent = new Intent(this, MainActivity.class);
-//        alarmIntent.putExtra("reminder", reminder);
-//        alarmIntent.putExtra("messageId", reminderId);
-//        alarmIntent.putExtra("messageId", messageId);
+
         alarmIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
-        PendingIntent contentIntent = PendingIntent.getActivity(this, reminderId, alarmIntent,
+        PendingIntent contentIntent = PendingIntent.getActivity(this, rowId, alarmIntent,
                 PendingIntent.FLAG_CANCEL_CURRENT);
 
         NotificationCompat.Builder alarmNotificationBuilder = new NotificationCompat.Builder(
         this).setContentTitle("Remind Me")
-            .setSmallIcon(R.drawable.pencil)
+            .setSmallIcon(R.drawable.notification_logo)
             .setLargeIcon(BitmapFactory.decodeResource(getResources(), R.drawable.r_logo))
             .setStyle(new NotificationCompat.BigTextStyle().bigText(reminder))
             .setVibrate(new long[]{1000, 1000, 1000, 1000, 1000, 1000})
@@ -68,12 +64,16 @@ public class AlarmService extends IntentService {
             .setContentText(reminder);
 
         alarmNotificationBuilder.setContentIntent(contentIntent);
-        alarmNotificationManager.notify(1, alarmNotificationBuilder.build());
+        alarmNotificationManager.notify(NOTIFICATION_ID, alarmNotificationBuilder.build());
 
-        //startActivity(alarmIntent);
         Log.d("AlarmService", "Notification sent.");
 
-//        AlarmReceiver.completeWakefulIntent(intent);
+//        //set up callback intent
+//        Intent returnIntent = new Intent(ACTION);
+//        returnIntent.putExtra("resultCode", Activity.RESULT_OK);
+//        returnIntent.putExtra("reminderId", reminderId);
+//        //broadcast with the action intent
+//        LocalBroadcastManager.getInstance(this).sendBroadcast(returnIntent);
     }
 
     private void displayToast(String reminder){

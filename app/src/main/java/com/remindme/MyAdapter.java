@@ -3,6 +3,7 @@ package com.remindme;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -24,9 +25,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     private final Context mContext;
     protected ListView mListView;
     private ReminderCallbacks reminderCallbacks;
-
-    public static int selectedId = -1;
-    public static boolean listMoved = false;
 
     static class TestViewHolder {
         public TextView tvHolderReminder;
@@ -52,13 +50,16 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
     }
 
     public int getCount() {
-        ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
-        return mItems.size();
+        return SingletonDataArray.getInstance().getSize();
     }
 
     public Reminder getItem(int position) {
         ArrayList<Reminder> mItems = SingletonDataArray.getInstance().getDataArray();
         return mItems.get(position);
+    }
+
+    public void removeItem(int position) {
+        SingletonDataArray.getInstance().removeReminder(position);
     }
 
     public long getItemId(int position) {
@@ -114,6 +115,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         }
 
         Reminder item = getItem(position);
+        //Log.d("myadapter getview", "position = " + position);
 
         viewHolder.tvHolderRowId.setText(String.valueOf(item.getRowId()));
         viewHolder.tvHolderReminder.setText(item.getReminder());
@@ -133,6 +135,8 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         }
 
         viewHolder.tvHolderDays.setText("Days: " + item.getDaysAsString());
+//        Log.d("myadapter getview", "days = " + item.getDaysAsString());
+//        Log.d("myadapter getview", "visibility = " + item.visibility);
 //        tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
 
         viewHolder.llSecondary.setVisibility(item.visibility);
@@ -141,11 +145,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         } else {
             viewHolder.llAll.setBackgroundResource(R.color.light_grey);
         }
-//        if (listMoved) {
-//            listMoved = false;
-//            viewHolder.llSecondary.setVisibility(View.GONE);
-//            viewHolder.llAll.setBackgroundResource(R.color.transparent);
-//        }
+        setButtonImage(!item.isActive(), viewHolder.btnStart);
 
         return rowView;
     }
@@ -226,7 +226,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         Button startButton = (Button) view;
 
         if (toStart) {
-            startButton.setBackgroundResource(R.drawable.play2);
+            startButton.setBackgroundResource(R.drawable.play_green);
         } else {
             startButton.setBackgroundResource(R.drawable.stop);
         }

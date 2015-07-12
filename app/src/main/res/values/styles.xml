@@ -4,8 +4,17 @@
     <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar" >
         <item name="android:windowBackground">@drawable/gradient_background</item>
         <item name="android:typeface">monospace</item>
+        <item name="actionBarStyle">@style/ActionBar.Solid.Sunshine.NoTitle</item>
     </style>
 
+    <style name="MainTheme" parent="AppTheme">
+        <item name="actionBarStyle">@style/ActionBar.Solid.Sunshine.NoTitle</item>
+    </style>
+
+    <style name="ActionBar.Solid.Sunshine.NoTitle" parent="@style/Widget.AppCompat.Light.ActionBar.Solid.Inverse">
+        <item name="displayOptions">useLogo|showHome|showTitle</item>
+        <item name="logo">@drawable/action_bar_heading</item>
+    </style>
 
     <style name="layout">
         <item name="android:background">#eeeeee</item>

@@ -26,8 +26,10 @@ public class DatabaseUtil {
     private static final String FIELD_RECURRING = "recurring";
     private static final String FIELD_NOTIFICATION_TYPE = "notification_type";
     private static final String FIELD_MESSAGE = "message_id";
+    private static final String FIELD_ACTIVE = "active";
+    private static final String FIELD_ALARM_TIME = "alarm_time";
 	private static final String[] ALL_FIELDS = new String[] {FIELD_ROWID, FIELD_REMINDER, FIELD_FREQUENCY, FIELD_TIME_FROM, FIELD_TIME_TO, FIELD_MONDAY, FIELD_TUESDAY, FIELD_WEDNESDAY, FIELD_THURSDAY, FIELD_FRIDAY,
-        FIELD_SATURDAY, FIELD_SUNDAY, FIELD_RECURRING, FIELD_NOTIFICATION_TYPE, FIELD_MESSAGE};
+        FIELD_SATURDAY, FIELD_SUNDAY, FIELD_RECURRING, FIELD_NOTIFICATION_TYPE, FIELD_MESSAGE, FIELD_ACTIVE, FIELD_ALARM_TIME};
 
     private static final String FIELD_CURRENT_ID = "current_id";
     private static final String[] ALL_CURRENT_FIELDS = new String[] {FIELD_ROWID, FIELD_CURRENT_ID};
@@ -49,13 +51,15 @@ public class DatabaseUtil {
     public static final int COLUMN_RECURRING = 12;
     public static final int COLUMN_NOTIFICATION_TYPE = 13;
     public static final int COLUMN_MESSAGE = 14;
+    public static final int COLUMN_ACTIVE = 15;
+    public static final int COLUMN_ALARM_TIME = 16;
     public static final int COLUMN_CURRENT_ID = 1;
 
 	//set up database information
 	private static final String DATABASE_NAME = "dbRemindMe";
 	private static final String DATABASE_TABLE = "mainReminders";
     private static final String DATABASE_TABLE_CURRENT = "currentReminder";
-	private static final int DATABASE_VERSION = 13; // The version number must be incremented each time a change to DB structure occurs.
+	private static final int DATABASE_VERSION = 14; // The version number must be incremented each time a change to DB structure occurs.
 		
 	//set up SQL statement for creating database table
 	private static final String DATABASE_CREATE_SQL = 
@@ -74,23 +78,31 @@ public class DatabaseUtil {
             + FIELD_SUNDAY + " BOOLEAN, "
             + FIELD_RECURRING + " BOOLEAN, "
             + FIELD_NOTIFICATION_TYPE + " BOOLEAN, "
-            + FIELD_MESSAGE + " INTEGER"
+            + FIELD_MESSAGE + " INTEGER, "
+            + FIELD_ACTIVE + " BOOLEAN, "
+            + FIELD_ALARM_TIME + " INTEGER"
 			+ ")";
 
     private static final String DATABASE_CREATE_CURRENT = "CREATE TABLE " + DATABASE_TABLE_CURRENT
             + " (" + FIELD_ROWID + " INTEGER PRIMARY KEY, "
             + FIELD_CURRENT_ID + " INTEGER)";
 	
-	private final Context context;
+	private static Context mContext;
 	private DatabaseHelper myDBHelper;
 	private SQLiteDatabase myDb;
 
+    //first constructor used by onCreate in main activity to set application context
+    public DatabaseUtil(Context context) {
+        mContext = context;
+        myDBHelper = new DatabaseHelper(mContext);
+    }
 
-	public DatabaseUtil(Context ctx) {
-		this.context = ctx;
-		myDBHelper = new DatabaseHelper(context);
+    //second constructor used by other classes without contexts
+	public DatabaseUtil() {
+		myDBHelper = new DatabaseHelper(mContext);
 	}
-	
+
+
 	//open the database connection
 	public DatabaseUtil open() {
 		myDb = myDBHelper.getWritableDatabase();
@@ -102,11 +114,19 @@ public class DatabaseUtil {
         myDBHelper.close();
 	}
 
+    public static boolean hasContext() {
+        if (mContext != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     //todo can combine insert and update methods by using a boolean parameter
 	//insert a new set of values into the main table
 	public long insertRow(String reminder, String frequency, float timeFrom, float timeTo,
-                          Boolean mon, Boolean tue, Boolean wed, Boolean thu, Boolean fri, Boolean sat, Boolean sun,
-                          Boolean useType, Boolean notificationType, int messageId) {
+                          boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun,
+                          boolean useType, boolean notificationType, int messageId, boolean active, long alarmTime) {
 		ContentValues initialValues = new ContentValues();
 		initialValues.put(FIELD_REMINDER, reminder);
 		initialValues.put(FIELD_FREQUENCY, frequency);
@@ -122,6 +142,8 @@ public class DatabaseUtil {
         initialValues.put(FIELD_RECURRING, useType);
         initialValues.put(FIELD_NOTIFICATION_TYPE, notificationType);
         initialValues.put(FIELD_MESSAGE, messageId);
+        initialValues.put(FIELD_ACTIVE, active);
+        initialValues.put(FIELD_ALARM_TIME, alarmTime);
 
         //insert the data into the table
 		return myDb.insert(DATABASE_TABLE, null, initialValues);
@@ -145,6 +167,8 @@ public class DatabaseUtil {
         initialValues.put(FIELD_RECURRING, reminder.getRecurring());
         initialValues.put(FIELD_NOTIFICATION_TYPE, reminder.getNotificationType());
         initialValues.put(FIELD_MESSAGE, reminder.getMessageId());
+        initialValues.put(FIELD_ACTIVE, reminder.isActive());
+        initialValues.put(FIELD_ALARM_TIME, reminder.getAlarmTime());
 
         //insert the data into the table
         return myDb.insert(DATABASE_TABLE, null, initialValues);
@@ -169,6 +193,8 @@ public class DatabaseUtil {
         updateValues.put(FIELD_RECURRING, reminder.getRecurring());
         updateValues.put(FIELD_NOTIFICATION_TYPE, reminder.getNotificationType());
         updateValues.put(FIELD_MESSAGE, reminder.getMessageId());
+        updateValues.put(FIELD_ACTIVE, reminder.isActive());
+        updateValues.put(FIELD_ALARM_TIME, reminder.getAlarmTime());
 
         //update the data in the table
         return myDb.update(DATABASE_TABLE,updateValues,where,null);
@@ -183,17 +209,18 @@ public class DatabaseUtil {
 
 	
 	//retrieve all the data in the main table
+    //todo remove additional rows for release?
 	public Cursor getAllRows() {
 		Cursor cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
 		if (cursor.getCount() == 1) {
-            insertRow("Walk the Dog", "5", 9.0f, 17.0f, true, true, true, false, false, true, true, true, true, 0);
+            insertRow("Walk the Dog", "5", 9.0f, 17.0f, true, true, true, false, false, true, true, true, true, 0, false, 0);
             cursor.moveToFirst();
         } else if (cursor.getCount() > 1) {
             cursor.moveToFirst();
 		} else {
             //todo need to fix the time inputs, they generate values of 0
-            insertRow("Take a Break!","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0);
-            insertRow("Walk the Dog","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0);
+            insertRow("Take a Break!","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
+            insertRow("Walk the Dog","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
             cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
         }
 		return cursor;
@@ -267,7 +294,7 @@ public class DatabaseUtil {
 
 
     public long createNewEntry() {
-        return insertRow("","0",9.0f,17.0f,false,false,false,false,false,false,false,true,true,0);
+        return insertRow("","0",9.0f,17.0f,false,false,false,false,false,false,false,true,true,0,false,0);
     }
 
 

@@ -22,11 +22,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Scott on 4/26/2015.
  */
-public class Reminder implements Parcelable {  //implements parcelable so the data can be sent between activities
+public class Reminder {
     public static boolean mOpened = false;
 
     private long rowId;  //id of reminder in the database
-//    private int reminderId; //id of reminder that corresponds with position in dataArray
+    private int reminderId; //id of reminder that corresponds with position in dataArray
     private String reminder;
     private String frequency;
     private float floatFrequency;
@@ -46,88 +46,39 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
     public int visibility = View.GONE;
 
+    //todo save to db every time new reminder or something changed
 
-    public Reminder (String rem, String freq, long id) {
+    public Reminder (int remId, String rem, String freq, long id, float fTimeFrom, float fTimeTo, boolean bMonday, boolean bTuesday, boolean bWednesday,
+                     boolean bThursday, boolean bFriday, boolean bSaturday, boolean bSunday,
+                     boolean bUseType, boolean bNotType, int iMsgId, boolean bActive, long lAlarmTime) {
+        reminderId = remId;
         reminder = rem;
         frequency = freq;
         floatFrequency = Float.parseFloat(frequency);
         rowId = id;
-        active = false;
-        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+        timeFrom = fTimeFrom;
+        timeTo = fTimeTo;
+
         messageDays = new ArrayList<Integer>();
-        alarmTime = 0;
+        monday = bMonday;if (monday) { messageDays.add(1); }
+        tuesday = bTuesday; if (tuesday) { messageDays.add(2); }
+        wednesday = bWednesday;if (wednesday) { messageDays.add(3); }
+        thursday = bThursday; if (thursday) { messageDays.add(4); }
+        friday = bFriday; if (friday) { messageDays.add(5); }
+        saturday = bSaturday; if (saturday) { messageDays.add(6); }
+        sunday = bSunday; if (sunday) { messageDays.add(7); }
+
+        reminderUseType = bUseType;
+        notificationType = bNotType;
+        messageId = iMsgId;
+        active = bActive;
+        alarmTime = lAlarmTime;
+
+        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
         bSelected = false;
-        reminderUseType = true;
-        //visibility = View.GONE;
     }
 
-    public int describeContents() {
-        return 0;
-    }
-
-    public void writeToParcel(Parcel parcel, int flags) {
-        parcel.writeString(reminder);
-        parcel.writeString(frequency);
-        parcel.writeLong(rowId);
-        parcel.writeFloat(floatFrequency);
-        parcel.writeFloat(timeFrom);
-        parcel.writeFloat(timeTo);
-        parcel.writeLong(counter);
-        parcel.writeByte((byte) (monday ? 1 : 0));
-        parcel.writeByte((byte) (tuesday ? 1 : 0));
-        parcel.writeByte((byte) (wednesday ? 1 : 0));
-        parcel.writeByte((byte) (thursday ? 1 : 0));
-        parcel.writeByte((byte) (friday ? 1 : 0));
-        parcel.writeByte((byte) (saturday ? 1 : 0));
-        parcel.writeByte((byte) (sunday ? 1 : 0));
-        parcel.writeByte((byte) (reminderUseType ? 1 : 0));
-        parcel.writeByte((byte) (notificationType ? 1 : 0));
-        parcel.writeInt(messageId);
-        parcel.writeByte((byte) (active ? 1 : 0));
-//        parcel.writeInt(reminderId);
-        parcel.writeList(messageDays);
-        parcel.writeLong(alarmTime);
-    }
-
-    private Reminder(Parcel in) {
-        reminder = in.readString();
-        frequency = in.readString();
-        rowId = in.readLong();
-        floatFrequency = in.readFloat();
-        timeFrom = in.readFloat();
-        timeTo = in.readFloat();
-        counter = in.readLong();
-        monday = in.readByte() != 0;
-        tuesday = in.readByte() != 0;
-        wednesday = in.readByte() != 0;
-        thursday = in.readByte() != 0;
-        friday = in.readByte() != 0;
-        saturday = in.readByte() != 0;
-        sunday = in.readByte() != 0;
-        reminderUseType = in.readByte() != 0;
-        notificationType = in.readByte() != 0;
-        messageId = in.readInt();
-        active = in.readByte() != 0;
-//        reminderId = in.readInt();
-        messageDays = in.readArrayList(null);
-        alarmTime = in.readLong();
-    }
-
-    public static final Parcelable.Creator<Reminder> CREATOR = new Creator<Reminder>() {
-        @Override
-        public Reminder createFromParcel(Parcel source) {
-            return new Reminder(source);
-        }
-
-        @Override
-        public Reminder[] newArray(int size) {
-            return new Reminder[size];
-        }
-    };
-
-    public long getRowId() {
-        return rowId;
-    }
+    public long getRowId() { return rowId; }
 
     public String getReminder() { return reminder; }
 
@@ -135,24 +86,9 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
     public boolean getOpened() { return mOpened; }
 
-//    public String getFormattedFrequency() {
-//        int hours, minutes, seconds;
-//        hours = intFrequency / (60 * 60 * 1000);
-//        minutes = (intFrequency % (60 * 60 * 1000)) / (60 * 1000);
-//        seconds = ((intFrequency % (60 * 60 * 1000)) % (60 * 1000) / 1000);
-//
-//        String formattedFreq = "";
-//        if (hours != 0) { formattedFreq = String.valueOf(hours) + ":"; }
-//        formattedFreq += String.format("%02d:%02d",
-//                minutes, seconds);
-//
-//        return formattedFreq;
-//    }
-
     public String getFormattedFrequency() {
         return TimeUtil.FloatTimeToStringHMS(floatFrequency);
     }
-
 
     public float getFloatFrequency() { return floatFrequency; }
 
@@ -173,69 +109,61 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         return days;
     }
 
+    public ArrayList<Integer> getMessageDays() { return messageDays; }
+
     public boolean getRecurring() { return reminderUseType; }
 
     public boolean getNotificationType() { return notificationType; }
 
     public int getMessageId() { return messageId; }
 
-    public long getCounter() { return counter; }
-
     public long getAlarmTime() { return alarmTime; }
 
-//    public int getReminderId() { return reminderId; }
+    public boolean getUseType() {return reminderUseType; }
 
     public boolean isActive() { return active; }
 
-
-    public void setReminder(String stringReminder) { reminder = stringReminder; }
+    public void setIndexId(int position) {
+        reminderId = position;
+    }
 
     public void setFloatFrequency(float floatFreq) {
         floatFrequency = floatFreq;
         frequency = String.valueOf(floatFreq);
 
         resetCounter();
+        dataUpdate();
     }
 
     public void setOpened(boolean opened) {
         mOpened = opened;
     }
 
-    public void setDays(boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun) {
-        if (messageDays == null) { messageDays = new ArrayList<Integer>(); }
-        if (!messageDays.isEmpty()) { messageDays.clear(); }
-
-        monday = mon; if (monday) { messageDays.add(1); }
-        tuesday = tue; if (tuesday) { messageDays.add(2); }
-        wednesday = wed; if (wednesday) { messageDays.add(3); }
-        thursday = thu; if (thursday) { messageDays.add(4); }
-        friday = fri; if (friday) { messageDays.add(5); }
-        saturday = sat; if (saturday) { messageDays.add(6); }
-        sunday = sun; if (sunday) { messageDays.add(7); }
-    }
-
     public void setTimes(float from, float to) {
         timeFrom = from;
         timeTo = to;
+        dataUpdate();
     }
 
     //the active flag indicates if the reminder currently is counting down
     public void setActive(boolean bActive) {
         active = bActive;
+        long systemTime = System.currentTimeMillis();
+        LocalTime localTime = LocalTime.now();
+        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
 
-        resetCounter();
-        alarmTime = System.currentTimeMillis() + counter;
+        if (reminderUseType) {
+            counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+        } else {
+            if (floatFrequency >= currentTime) {
+                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime);
+            } else {
+                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime + 24);
+            }
+        }
+        alarmTime = systemTime + counter;
+        dataUpdate();
     }
-
-    public void setMisc(boolean bUsageType, boolean bNotificationType, int iMessageId) {
-        reminderUseType = bUsageType;
-        notificationType = bNotificationType;
-        messageId = iMessageId;
-    }
-
-//    public void setReminderId(int listPosition) {
-//        reminderId = listPosition;
-//    }
 
     public void resetCounter() {
         LocalTime localTime = LocalTime.now();
@@ -252,12 +180,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         }
     }
 
-    public void setAlarmTime (long time) { alarmTime = time; }
-
-    public void startCounter() {
-        counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
-    }
-
     public String getCounterAsString() {
         long time = counter;
         String strTimer;
@@ -266,8 +188,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         } else if (!reminderUseType && !active) {
             strTimer = TimeUtil.FloatTimeToStringExact(floatFrequency);
         } else {
-            //todo counter display not always working correctly
-
             long days = TimeUnit.MILLISECONDS.toDays(time);
             long hours = TimeUnit.MILLISECONDS.toHours(time) -
                     TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(time));
@@ -279,9 +199,6 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
             if (days > 0) {
                 format = "%01dd %02d:%02d:%02d";
                 strTimer = ("" + String.format(format, days, hours, minutes, seconds));
-//            } else if (hours >= 10) {
-//                format = "%02d:%02d:%02d";
-//                strTimer = ("" + String.format(format, hours, minutes, seconds));
             } else if (hours > 0) {
                 format = "%01d:%02d:%02d";
                 strTimer = ("" + String.format(format, hours, minutes, seconds));
@@ -292,9 +209,8 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
                 format = "%01d:%02d";
                 strTimer = ("" + String.format(format, minutes, seconds));
             }
-
         }
-        //Log.v("reminder counter", strTimer);
+
         return (strTimer);
     }
 
@@ -308,6 +224,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
                 long newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
                 if (newTime == 0) {
                     active = false;
+                    dataUpdate();
                 } else {
                     nextAlarm = true;
                 }
@@ -318,7 +235,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
             counter = time;
         }
         Log.v("reduceCounter end", "counter: " + counter + ", next alarm: " + nextAlarm);
-        return (nextAlarm);  //this indicates whether or not the timer has completed
+        return nextAlarm;  //this indicates whether or not the timer has completed
     }
 
     //need an update method for the counter for when the app wakes from the background
@@ -337,7 +254,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
 
 
     //set up next alarm based on the class settings
-    private long scheduleNextAlarm() {
+    public long scheduleNextAlarm() {
         //first calculate next time for today, then check if it is in time range, then check for next days
         LocalTime localTime = LocalTime.now();
         LocalDate localDate = LocalDate.now();
@@ -377,35 +294,36 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
             //also check if no days were selected for repeating
             if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
                 exit = true;
-            }
+            } else {
 
-            //first check for today
-            if (messageDays.contains(today) && alarmNextTime < timeTo) {
-                if (alarmNextTime <= timeFrom) {
-                    nextTime = timeFrom + floatFrequency;
-                } else {
-                    //schedule alarm normally
-                    nextTime = alarmNextTime;
-                }
-            } else {  //check for next day to run alarm
-                for (int i = tomorrow; i < 8; i++) {
-                    if (messageDays.contains(i)) {
-                        found = true;
-                        daysFromToday = i - tomorrow + 1;
-                        break;
+                //first check for today
+                if (messageDays.contains(today) && alarmNextTime < timeTo) {
+                    if (alarmNextTime <= timeFrom) {
+                        nextTime = timeFrom + floatFrequency;
+                    } else {
+                        //schedule alarm normally
+                        nextTime = alarmNextTime;
                     }
-                }
-                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                    for (int i = 1; i < tomorrow; i++) {
+                } else {  //check for next day to run alarm
+                    for (int i = tomorrow; i < 8; i++) {
                         if (messageDays.contains(i)) {
                             found = true;
-                            daysFromToday = 7 - tomorrow + i + 1;
+                            daysFromToday = i - tomorrow + 1;
                             break;
                         }
                     }
-                }
-                if (found) {
-                    nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
+                    if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
+                        for (int i = 1; i < tomorrow; i++) {
+                            if (messageDays.contains(i)) {
+                                found = true;
+                                daysFromToday = 7 - tomorrow + i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    if (found) {
+                        nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
+                    }
                 }
             }
         }
@@ -419,6 +337,7 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         nextTime -= currentTime;
         alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentSystemTime;
 
+        dataUpdate();
         return TimeUtil.FloatTimeToMilliseconds(nextTime);
     }
 
@@ -459,52 +378,46 @@ public class Reminder implements Parcelable {  //implements parcelable so the da
         return stringDays;
     }
 
-    public void update(Context context, boolean editedReminder, int position){
-        DatabaseUtil db = new DatabaseUtil(context);
+    public void editUpdate(boolean editedReminder, int position){
+        if (!editedReminder) {
+            SingletonDataArray.getInstance().addReminder(this);
+        } else {
+            bSelected = true;
+        }
+    }
+
+    public void dataUpdate() {
+        DatabaseUtil db = new DatabaseUtil();
         db.open();
         db.updateRow(this);
         db.close();
+        Log.d("reminder dataUpdate", "updating database");
+    }
+
+    public void updateValues(String rem, float fTimeFrom, float fTimeTo, boolean bMonday, boolean bTuesday, boolean bWednesday,
+                             boolean bThursday, boolean bFriday, boolean bSaturday, boolean bSunday,
+                             boolean bUseType, boolean bNotType, int iMsgId, boolean bActive, long lAlarmTime) {
+        reminder = rem;
+        timeFrom = fTimeFrom;
+        timeTo = fTimeTo;
+
+        messageDays = new ArrayList<Integer>();
+        monday = bMonday; if (monday) { messageDays.add(1); }
+        tuesday = bTuesday; if (tuesday) { messageDays.add(2); }
+        wednesday = bWednesday; if (wednesday) { messageDays.add(3); }
+        thursday = bThursday; if (thursday) { messageDays.add(4); }
+        friday = bFriday; if (friday) { messageDays.add(5); }
+        saturday = bSaturday; if (saturday) { messageDays.add(6); }
+        sunday = bSunday; if (sunday) { messageDays.add(7); }
+
+        reminderUseType = bUseType;
+        notificationType = bNotType;
+        messageId = iMsgId;
+        active = bActive;
+        alarmTime = lAlarmTime;
+        dataUpdate();
+
         counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
-        if (editedReminder) {
-            SingletonDataArray.getInstance().updateReminder(this, position);
-        } else {
-            SingletonDataArray.getInstance().addReminder(this);
-        }
-    }
-
-    public void reload(Context context) {
-        DatabaseUtil db = new DatabaseUtil(context);
-        db.open();
-        Cursor cursor = db.getRow(rowId);
-        if (cursor.getCount() > 0) {
-            cursor.moveToFirst();
-        } else {
-            return;
-        }
-
-        frequency = cursor.getString(DatabaseUtil.COLUMN_FREQUENCY);
-        reminder = cursor.getString(DatabaseUtil.COLUMN_REMINDER);
-
-        monday = cursor.getInt(DatabaseUtil.COLUMN_MONDAY) > 0;
-        tuesday = cursor.getInt(DatabaseUtil.COLUMN_TUESDAY) > 0;
-        wednesday = cursor.getInt(DatabaseUtil.COLUMN_WEDNESDAY) > 0;
-        thursday = cursor.getInt(DatabaseUtil.COLUMN_THURSDAY) > 0;
-        friday = cursor.getInt(DatabaseUtil.COLUMN_FRIDAY) > 0;
-        saturday = cursor.getInt(DatabaseUtil.COLUMN_SATURDAY) > 0;
-        sunday = cursor.getInt(DatabaseUtil.COLUMN_SUNDAY) > 0;
-
-        timeFrom = cursor.getFloat(DatabaseUtil.COLUMN_TIME_FROM);
-        timeTo = cursor.getFloat(DatabaseUtil.COLUMN_TIME_TO);
-
-        reminderUseType = cursor.getInt(DatabaseUtil.COLUMN_RECURRING) > 0;
-        notificationType = cursor.getInt(DatabaseUtil.COLUMN_NOTIFICATION_TYPE) > 0;
-        messageId = cursor.getInt(DatabaseUtil.COLUMN_MESSAGE);
-
-        db.close();
-    }
-
-    public int getVisibility() {
-        return visibility;
     }
 
     public void toggleVisibility()
