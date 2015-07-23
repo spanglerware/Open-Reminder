@@ -1,5 +1,10 @@
 package com.remindme;
 
+import org.joda.time.LocalDate;
+import org.joda.time.LocalTime;
+
+import java.util.ArrayList;
+
 /**
  * Created by Scott on 6/14/2015.
  */
@@ -100,5 +105,88 @@ public class TimeUtil {
 
         return timeText;
     }
+
+    public static long scheduleAlarm(boolean useType, float frequency,
+                                         ArrayList<Integer> days, float timeFrom,
+                                         float timeTo) {
+        //first calculate next time for today, then check if it is in time range, then check for next days
+        LocalTime localTime = LocalTime.now();
+        LocalDate localDate = LocalDate.now();
+
+        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
+        float alarmNextTime;
+
+        int today = localDate.getDayOfWeek();
+        int tomorrow = localDate.getDayOfWeek() + 1;
+        if (tomorrow > 7) { tomorrow = 1; }
+        boolean found = false;
+        boolean exit = false;
+        int daysFromToday = 0;
+        float nextTime = 0;  //this value will be the next alarm time in float time
+
+        if (!useType) {
+            if (frequency >= currentTime) {
+                nextTime = frequency;
+            } else if (days.isEmpty()) {
+                exit = true;
+            } else {
+                for (int i = tomorrow; i < 8; i++) {
+                    if (days.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
+                }
+                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
+                    for (int i = 1; i < tomorrow; i++) {
+                        if (days.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
+                    }
+                }
+                nextTime = (frequency + (24 * daysFromToday));
+            }
+        } else {
+            alarmNextTime = currentTime + frequency;
+
+            //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
+            //also check if no days were selected for repeating
+            if (frequency > (timeTo - timeFrom) || days.isEmpty()) {
+                exit = true;
+            } else {
+
+                //first check for today
+                if (days.contains(today) && alarmNextTime < timeTo) {
+                    if (alarmNextTime <= timeFrom) {
+                        nextTime = timeFrom + frequency;
+                    } else {
+                        //schedule alarm normally
+                        nextTime = alarmNextTime;
+                    }
+                } else {  //check for next day to run alarm
+                    for (int i = tomorrow; i < 8; i++) {
+                        if (days.contains(i)) {
+                            found = true;
+                            daysFromToday = i - tomorrow + 1;
+                            break;
+                        }
+                    }
+                    if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
+                        for (int i = 1; i < tomorrow; i++) {
+                            if (days.contains(i)) {
+                                found = true;
+                                daysFromToday = 7 - tomorrow + i + 1;
+                                break;
+                            }
+                        }
+                    }
+                    if (found) {
+                        nextTime = (daysFromToday * 24) + timeFrom + frequency;
+                    }
+                }
+            }
+        }
+
+        if (exit) return 0;
+
+        nextTime -= currentTime;
+        return TimeUtil.FloatTimeToMilliseconds(nextTime);
+    }
+
+
 
 } //end of TimeUtil class

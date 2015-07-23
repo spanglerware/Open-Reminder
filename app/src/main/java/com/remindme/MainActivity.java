@@ -41,35 +41,31 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private boolean edited = false;
 
     public ListView spinner;
-
-    //ArrayList<Reminder> dataArray;
-    MyAdapter myAdapter;
-    Runnable timerRunnable;
-    Handler timerHandler;
+    private MyAdapter myAdapter;
+    private Runnable timerRunnable;
+    private Handler timerHandler;
     float xDown, xUp, yDown, yUp;
 
     private long spinnerDbId;
     private int spinnerRow;
 
-    private static MainActivity inst;
+    private static MainActivity instance;
 
 
-    //todo BUG alarmTime not writing correctly to db
+    //todo BUG alarmTime not writing correctly to db?
 
-    //TODO BUG app destroyed not able to trigger alarm? or schedule next alarm? sometimes works, sometimes not
-    //TODO FIX? could set additional alarms for each day selected and set up to use repeating alarms
-
-    //todo BUG alarmReceiver not able to change start button if no next alarm
+    //todo BUG if device turned off, countdown timers continue but alarm was cancelled
+        //todo solution? overwrite all active timers with another alarm?
 
     //todo BUG float rounding causing time display to be sometimes off a second
+
+    //todo REMOVE initial entries?
 
     //todo need to implement onSaveInstanceState
 
     //todo add color to UI
 
     //todo remove log statements for release
-
-    //todo need smaller icons for app and notification
 
     //todo clean up and comment code in main
 
@@ -79,11 +75,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         super.onCreate(bundle);
         setContentView(R.layout.activity_main);
         Log.v("onPause", "Main fired onCreate");
-
-//        getSupportActionBar().setDisplayUseLogoEnabled(true);
-//        getSupportActionBar().setDisplayShowHomeEnabled(true);
-//        getSupportActionBar().setIcon(R.drawable.menu_logo);
-
 
         openDB();
 
@@ -104,6 +95,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         });
 
         IntentFilter filter = new IntentFilter(AlarmService.ACTION);
+        restartAlarms();
 
         //end of MainActivity onCreate
     }
@@ -144,7 +136,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     @Override
     protected void onStart() {
         super.onStart();
-        inst = this;
+        instance = this;
     }
 
     @Override
@@ -199,9 +191,10 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         return super.onOptionsItemSelected(item);
     }
 
-
     @Override
     public void startReminderCallBack(int position) {
+        Reminder reminder = myAdapter.getItem(position);
+        reminder.setActive(true);
         startReminder(position);
     }
 
@@ -315,6 +308,8 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                         friday, saturday, sunday, reminderUseType, notificationType, messageId, active, alarmTime);
                 dataArray.add(i, item);
 
+                if (active) Log.d("Main fillDataArray", "next alarm: " + alarmTime);
+
                 cursor.moveToNext();
             }
         }
@@ -323,7 +318,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     private void addItemsToSpinner() {
         spinner.setAdapter(myAdapter);
-        //spinner.setSelection(spinnerRow);
     }
 
     //todo need to examine this update for refactoring
@@ -331,10 +325,20 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         for (Reminder reminder : dataArray) {
             if (reminder.isActive()) {
+                Log.d("Main updateReminders", "next alarm: " + reminder.getAlarmTime());
                 reminder.updateCounter();
             }
         }
         myAdapter.reduceCounters(0);
+    }
+
+    private void restartAlarms() {
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+        for (Reminder reminder : dataArray) {
+            if (reminder.isActive()) {
+                startReminder(reminder.getIndexId());
+            }
+        }
     }
 
     private void displayToast(String text){
@@ -344,13 +348,13 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     private void startReminder(int position) {
         Reminder reminder = myAdapter.getItem(position);
-        reminder.setActive(true);
+        //reminder.setActive(true);
 
         int rowId = (int) reminder.getRowId();
         long alarmTime = reminder.getAlarmTime();
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent alarmIntent = new Intent(this, AlarmReceiver.class);
+        Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
         //alarmIntent.setAction("com.remindme.action.ALARM_INDEF");
         alarmIntent.putExtra("reminder", reminder.getReminder());
         alarmIntent.putExtra("rowId", rowId);
@@ -359,10 +363,9 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         alarmIntent.putExtra("days", reminder.getMessageDays());
         alarmIntent.putExtra("timeFrom", reminder.getTimeFrom());
         alarmIntent.putExtra("timeTo", reminder.getTimeTo());
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, rowId,
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(getApplicationContext(), rowId,
                 alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-        //todo change to repeating? NO, unable to do so because times can change based on days selected
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
     }
 
@@ -435,7 +438,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         intent.putExtra("editType", true);
         intent.putExtra("arrayId", position);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        //startActivityForResult(intent, REQUEST_EDIT);
         startActivity(intent);
 
         edited = true;

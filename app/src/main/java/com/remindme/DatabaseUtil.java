@@ -26,8 +26,8 @@ public class DatabaseUtil {
     private static final String FIELD_RECURRING = "recurring";
     private static final String FIELD_NOTIFICATION_TYPE = "notification_type";
     private static final String FIELD_MESSAGE = "message_id";
-    private static final String FIELD_ACTIVE = "active";
-    private static final String FIELD_ALARM_TIME = "alarm_time";
+    public static final String FIELD_ACTIVE = "active";
+    public static final String FIELD_ALARM_TIME = "alarm_time";
 	private static final String[] ALL_FIELDS = new String[] {FIELD_ROWID, FIELD_REMINDER, FIELD_FREQUENCY, FIELD_TIME_FROM, FIELD_TIME_TO, FIELD_MONDAY, FIELD_TUESDAY, FIELD_WEDNESDAY, FIELD_THURSDAY, FIELD_FRIDAY,
         FIELD_SATURDAY, FIELD_SUNDAY, FIELD_RECURRING, FIELD_NOTIFICATION_TYPE, FIELD_MESSAGE, FIELD_ACTIVE, FIELD_ALARM_TIME};
 
@@ -200,6 +200,12 @@ public class DatabaseUtil {
         return myDb.update(DATABASE_TABLE,updateValues,where,null);
     }
 
+    public void updateSelectRow(String fieldName, long rowId, String newValue) {
+        String sql = "UPDATE " + DATABASE_TABLE +
+                " SET " + fieldName + " = '" + newValue +
+                "' WHERE " + FIELD_ROWID + " = " + rowId;
+        myDb.execSQL(sql);
+    }
 
 	//remove a row from the database using the rowId
 	public boolean deleteRow(long rowId) {
@@ -218,7 +224,6 @@ public class DatabaseUtil {
         } else if (cursor.getCount() > 1) {
             cursor.moveToFirst();
 		} else {
-            //todo need to fix the time inputs, they generate values of 0
             insertRow("Take a Break!","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
             insertRow("Walk the Dog","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
             cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);

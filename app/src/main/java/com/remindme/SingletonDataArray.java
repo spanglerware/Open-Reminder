@@ -118,11 +118,6 @@ public class SingletonDataArray {
                 cursor.moveToNext();
             }
         }
-
-
-
-
-
     }
 
 

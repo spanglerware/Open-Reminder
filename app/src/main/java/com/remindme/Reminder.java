@@ -46,7 +46,6 @@ public class Reminder {
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
     public int visibility = View.GONE;
 
-    //todo save to db every time new reminder or something changed
 
     public Reminder (int remId, String rem, String freq, long id, float fTimeFrom, float fTimeTo, boolean bMonday, boolean bTuesday, boolean bWednesday,
                      boolean bThursday, boolean bFriday, boolean bSaturday, boolean bSunday,
@@ -121,6 +120,8 @@ public class Reminder {
 
     public boolean getUseType() {return reminderUseType; }
 
+    public int getIndexId() { return reminderId; }
+
     public boolean isActive() { return active; }
 
     public void setIndexId(int position) {
@@ -143,6 +144,10 @@ public class Reminder {
         timeFrom = from;
         timeTo = to;
         dataUpdate();
+    }
+
+    public void setAlarmTime(long time) {
+        alarmTime = time;
     }
 
     //the active flag indicates if the reminder currently is counting down
@@ -255,90 +260,19 @@ public class Reminder {
 
     //set up next alarm based on the class settings
     public long scheduleNextAlarm() {
-        //first calculate next time for today, then check if it is in time range, then check for next days
-        LocalTime localTime = LocalTime.now();
-        LocalDate localDate = LocalDate.now();
 
-        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
-        float alarmNextTime;
-        long currentSystemTime = System.currentTimeMillis();
+        long nextTime = TimeUtil.scheduleAlarm(reminderUseType, floatFrequency, messageDays,
+                timeFrom, timeTo);
 
-        int today = localDate.getDayOfWeek();
-        int tomorrow = localDate.getDayOfWeek() + 1;
-        if (tomorrow > 7) { tomorrow = 1; }
-        boolean found = false;
-        boolean exit = false;
-        int daysFromToday = 0;
-        float nextTime = 0;  //this value will be the next alarm time in float time
-
-        if (!reminderUseType) {
-            if (floatFrequency >= currentTime) {
-                nextTime = floatFrequency;
-            } else if (messageDays.isEmpty()) {
-                exit = true;
-            } else {
-                for (int i = tomorrow; i < 8; i++) {
-                    if (messageDays.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
-                }
-                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                    for (int i = 1; i < tomorrow; i++) {
-                        if (messageDays.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
-                    }
-                }
-                nextTime = (floatFrequency + (24 * daysFromToday));
-            }
-        } else {
-            alarmNextTime = currentTime + floatFrequency;
-
-            //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
-            //also check if no days were selected for repeating
-            if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
-                exit = true;
-            } else {
-
-                //first check for today
-                if (messageDays.contains(today) && alarmNextTime < timeTo) {
-                    if (alarmNextTime <= timeFrom) {
-                        nextTime = timeFrom + floatFrequency;
-                    } else {
-                        //schedule alarm normally
-                        nextTime = alarmNextTime;
-                    }
-                } else {  //check for next day to run alarm
-                    for (int i = tomorrow; i < 8; i++) {
-                        if (messageDays.contains(i)) {
-                            found = true;
-                            daysFromToday = i - tomorrow + 1;
-                            break;
-                        }
-                    }
-                    if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                        for (int i = 1; i < tomorrow; i++) {
-                            if (messageDays.contains(i)) {
-                                found = true;
-                                daysFromToday = 7 - tomorrow + i + 1;
-                                break;
-                            }
-                        }
-                    }
-                    if (found) {
-                        nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
-                    }
-                }
-            }
-        }
-
-        if (exit) {
+        if (nextTime == 0) {
             active = false;
             alarmTime = 0;
-            return 0;
+        } else {
+            alarmTime = nextTime;
         }
 
-        nextTime -= currentTime;
-        alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentSystemTime;
-
         dataUpdate();
-        return TimeUtil.FloatTimeToMilliseconds(nextTime);
+        return alarmTime;
     }
 
 

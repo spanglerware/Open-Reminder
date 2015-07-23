@@ -30,9 +30,16 @@ public class AlarmReceiver extends BroadcastReceiver {
     private float timeTo;
     private ArrayList<Integer> messageDays;
     private boolean reminderUseType;
+    private static Context mContext;
 
     @Override
     public void onReceive(final Context context, Intent intent) {
+        ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
+
+        //now sending application context to this receiver instead of activity context to prevent memory leaks
+        if (mContext == null) mContext = context;
+        DatabaseUtil db = new DatabaseUtil(mContext);
+        db.open();
 
         String message = intent.getStringExtra("reminder");
         int rowId = intent.getIntExtra("rowId", -1);
@@ -43,7 +50,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         timeTo = intent.getFloatExtra("timeTo", -1);
         messageDays = intent.getIntegerArrayListExtra("days");
 
-        if (context != null) {
+        if (mContext != null) {
             Log.d("alarm receiver", "context not null");
         } else {
             Log.d("alarm receiver", "context null");
@@ -54,58 +61,47 @@ public class AlarmReceiver extends BroadcastReceiver {
             return;
         } else {
             Log.d("alarm receiver", "intent extra rowId: " + rowId);
-
         }
 
-        PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+        PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
         PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.SCREEN_BRIGHT_WAKE_LOCK|PowerManager.ACQUIRE_CAUSES_WAKEUP, "TAG");
         wakeLock.acquire();
 
-        Intent intentService = new Intent(context, AlarmService.class);
+        Intent intentService = new Intent(mContext, AlarmService.class);
         intentService.putExtra("reminder", message);
         intentService.putExtra("rowId", rowId);
 
-        context.startService(intentService);
+        mContext.startService(intentService);
         setResultCode(Activity.RESULT_OK);
 
-        showNotification(context, message);
+        showNotification(mContext, message);
 
-//        //TODO start next alarm not working well here, may need to launch another activity and start from there
-//        //todo place next alarm scheduling here?
-//        int dataArraySize = SingletonDataArray.getInstance().getSize();
-//        if (dataArraySize == 0) SingletonDataArray.getInstance().loadFromDb(context);
-//
-//        Reminder reminder = SingletonDataArray.getInstance().getReminderWithId(rowId);
-//        Log.d("alarm receiver", "dataArray size: " + dataArraySize);
+        //catch default values before calling functions
+        if (floatFrequency >= 0 && timeFrom >= 0 && timeTo >= 0 && rowId >= 0) {
+            long nextAlarm = TimeUtil.scheduleAlarm(reminderUseType, floatFrequency, messageDays,
+                    timeFrom, timeTo);
+            if (nextAlarm > 0) {
+                nextAlarm += System.currentTimeMillis();
+                startReminder(mContext, nextAlarm, rowId, message);
 
-        //todo send all needed info with intent then send again with next one
-        //todo need use type, frequency, times, and days
+                if (!dataArray.isEmpty()) {
+                    Reminder reminder = SingletonDataArray.getInstance().getReminderWithId(rowId);
+                    reminder.setAlarmTime(nextAlarm);
+                }
+                //update database alarmTime here
+                db.updateSelectRow(DatabaseUtil.FIELD_ALARM_TIME, rowId, String.valueOf(nextAlarm));
+            } else {
+                if (!dataArray.isEmpty()) {
+                    Reminder reminder = SingletonDataArray.getInstance().getReminderWithId(rowId);
+                    reminder.setActive(false);
+                }
+                //update database active to false here
+                db.updateSelectRow(DatabaseUtil.FIELD_ACTIVE, rowId, String.valueOf(false));
+            }
+            Log.d("Alarm Receiver", "next alarm: " + nextAlarm);
+        }
 
-//        if (reminder != null) {
-//            //schedule next alarm
-//            long nextAlarm = reminder.scheduleNextAlarm();
-//
-//
-//            //if no next alarm, set to inactive
-//            if (nextAlarm == 0) {
-//                reminder.setActive(false);
-//                Log.d("alarm receiver", "setting reminder to inactive");
-//            } else {
-//                startReminder(context, reminder);
-//                Log.d("alarm receiver", "starting another reminder: " + reminder.getCounterAsString());
-//                Log.d("alarm receiver", "stored frequency: " + reminder.getFloatFrequency());
-//            }
-//
-//        } else {
-//            Log.d("alarm receiver", "reminder is null");
-//        }
-
-        //todo catch default values before calling functions
-        long nextAlarm = scheduleNextAlarm();
-        startReminder(context, nextAlarm, rowId, message);
-
-        //todo if not able to update database using this structure will have to check for reminder updates upon restart
-
+        db.close();
         wakeLock.release();
     }
 
@@ -125,7 +121,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         toast.show();
     }
 
-    //todo refactor main start to include this one
+    //todo refactor main start to include this one?
     private void startReminder(Context context, long alarmTime, int rowId, String reminder) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(context, AlarmReceiver.class);
@@ -141,94 +137,6 @@ public class AlarmReceiver extends BroadcastReceiver {
                 alarmIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, alarmTime, pendingIntent);
-    }
-
-
-    public long scheduleNextAlarm() {
-        //first calculate next time for today, then check if it is in time range, then check for next days
-        LocalTime localTime = LocalTime.now();
-        LocalDate localDate = LocalDate.now();
-
-        float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
-        float alarmNextTime;
-        long currentSystemTime = System.currentTimeMillis();
-
-        int today = localDate.getDayOfWeek();
-        int tomorrow = localDate.getDayOfWeek() + 1;
-        if (tomorrow > 7) { tomorrow = 1; }
-        boolean found = false;
-        boolean exit = false;
-        int daysFromToday = 0;
-        float nextTime = 0;  //this value will be the next alarm time in float time
-
-        if (!reminderUseType) {
-            if (floatFrequency >= currentTime) {
-                nextTime = floatFrequency;
-            } else if (messageDays.isEmpty()) {
-                exit = true;
-            } else {
-                for (int i = tomorrow; i < 8; i++) {
-                    if (messageDays.contains(i)) { found = true; daysFromToday = i - tomorrow + 1;  break; }
-                }
-                if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                    for (int i = 1; i < tomorrow; i++) {
-                        if (messageDays.contains(i)) { found = true; daysFromToday = 7 - tomorrow + i + 1;  break; }
-                    }
-                }
-                nextTime = (floatFrequency + (24 * daysFromToday));
-            }
-        } else {
-            alarmNextTime = currentTime + floatFrequency;
-
-            //check if frequency fits within timefrom - timeto interval, if not then there will be no repeat
-            //also check if no days were selected for repeating
-            if (floatFrequency > (timeTo - timeFrom) || messageDays.isEmpty()) {
-                exit = true;
-            } else {
-
-                //first check for today
-                if (messageDays.contains(today) && alarmNextTime < timeTo) {
-                    if (alarmNextTime <= timeFrom) {
-                        nextTime = timeFrom + floatFrequency;
-                    } else {
-                        //schedule alarm normally
-                        nextTime = alarmNextTime;
-                    }
-                } else {  //check for next day to run alarm
-                    for (int i = tomorrow; i < 8; i++) {
-                        if (messageDays.contains(i)) {
-                            found = true;
-                            daysFromToday = i - tomorrow + 1;
-                            break;
-                        }
-                    }
-                    if (!found && tomorrow > 1) {  //if tomorrow = 1 then it has already been covered by loop above
-                        for (int i = 1; i < tomorrow; i++) {
-                            if (messageDays.contains(i)) {
-                                found = true;
-                                daysFromToday = 7 - tomorrow + i + 1;
-                                break;
-                            }
-                        }
-                    }
-                    if (found) {
-                        nextTime = (daysFromToday * 24) + timeFrom + floatFrequency;
-                    }
-                }
-            }
-        }
-
-        if (exit) {
-//            active = false;
-//            alarmTime = 0;
-            return 0;
-        }
-
-        nextTime -= currentTime;
-//        alarmTime = TimeUtil.FloatTimeToMilliseconds(nextTime) + currentSystemTime;
-
-//
-        return TimeUtil.FloatTimeToMilliseconds(nextTime);
     }
 
 
