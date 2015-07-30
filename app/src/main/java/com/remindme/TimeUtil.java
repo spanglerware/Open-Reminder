@@ -2,12 +2,12 @@ package com.remindme;
 
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
-
 import java.util.ArrayList;
 
 /**
  * Created by Scott on 6/14/2015.
  */
+
 public class TimeUtil {
 
     private TimeUtil () {}
@@ -55,12 +55,12 @@ public class TimeUtil {
         int hours, minutes, seconds;
         hours = (int) Math.floor(timeValue);
         minutes = (int) Math.floor((timeValue - hours) * 60);
-        seconds = (int) Math.floor((timeValue - hours - (minutes / 60.0f)) * 3600);
-        if (seconds > 60) {
+        seconds = (int) Math.round((timeValue - hours - (minutes / 60.0f)) * 3600);
+        if (seconds >= 60) {
             seconds -= 60;
             minutes += 1;
         }
-        if (minutes > 60) {
+        if (minutes >= 60) {
             minutes -= 60;
             hours += 1;
         }
@@ -74,18 +74,18 @@ public class TimeUtil {
 
     public static String FloatTimeToStringExact(float timeValue) {
         boolean flag = false;
-        String timeText = "";
+        String timeText;
 
         if (timeValue == 24) { return "12:00 am"; }
 
         int hours = (int) Math.floor(timeValue);
         int minutes = (int) Math.floor((timeValue - hours) * 60);
-        int seconds = (int) Math.floor((timeValue - hours - (minutes / 60.0f)) * 3600);
-        if (seconds > 60) {
+        int seconds = (int) Math.round((timeValue - hours - (minutes / 60.0f)) * 3600);
+        if (seconds >= 60) {
             seconds -= 60;
             minutes += 1;
         }
-        if (minutes > 60) {
+        if (minutes >= 60) {
             minutes -= 60;
             hours += 1;
         }

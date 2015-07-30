@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Remind Me</string>
+    <string name="app_name">Open Reminder</string>
 
     <string name="action_settings">Settings</string>
     <string name="demo_min_label">Min</string>

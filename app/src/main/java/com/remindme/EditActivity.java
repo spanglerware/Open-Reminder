@@ -2,45 +2,20 @@ package com.remindme;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
-import android.app.TimePickerDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.database.Cursor;
-import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.support.v7.internal.widget.AdapterViewCompat;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.GridView;
-import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.RadioButton;
-import android.widget.RelativeLayout;
-import android.widget.SimpleAdapter;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.TimePicker;
-
-import java.sql.Time;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Scott on 4/18/2015.
@@ -81,25 +56,35 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private Reminder mReminder;
     private int mListPosition;
 
+    private final String EDIT_KEY = "editing";
+    private final String POSITION_KEY = "listPosition";
+
     //todo handle screen rotation during edit, currently saves and adds new
+    //todo      screen rotate keeps reminder text but not frequency
 
-    //todo reduce text size, add more padding
+    //todo need to update values on selection instead of at onPause?
 
-    //todo implement am/pm in numberpicker for single use times
+    //todo DELETE blank reminders
 
     @Override
     public void onCreate(Bundle bundle) {
         super.onCreate(bundle);
         this.setContentView(R.layout.activity_edit_new);
 
-        //todo move to assignObjects method
         initDayButtons();
         assignObjects();
 
-        //load interface with data in case of an edit
-        Intent intent = getIntent();
-        editReminder = intent.getBooleanExtra("editType", false);
-        mListPosition = intent.getIntExtra("arrayId", -1);
+        if (bundle != null) {
+            //load saved instance state
+            mListPosition = bundle.getInt(POSITION_KEY);
+            editReminder = bundle.getBoolean(EDIT_KEY);
+        } else {
+            //load interface with data in case of an edit
+            Intent intent = getIntent();
+            editReminder = intent.getBooleanExtra("editType", false);
+            mListPosition = intent.getIntExtra("arrayId", -1);
+        }
+
         if (mListPosition < 0) { finish(); }
 
         if (editReminder) {
@@ -148,13 +133,16 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         //todo if reminder blank may either assign "blank reminder" value or show dialog asking to save or delete
     }
 
-//    @Override
-//    public void onBackPressed() {
-//        Log.d("edit onbackpressed", "getting called");
-//        Intent mIntent = new Intent();
-//        setResult(RESULT_OK, mIntent);
-//        super.onBackPressed();
-//    }
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        //set edit flag to true to prevent creating more entries in database
+        editReminder = true;
+
+        savedInstanceState.putInt(POSITION_KEY, mListPosition);
+        savedInstanceState.putBoolean(EDIT_KEY, editReminder);
+
+        super.onSaveInstanceState(savedInstanceState);
+    }
 
     public void assignObjects() {
         etReminder = (EditText) findViewById(R.id.edittext_reminder);
@@ -172,7 +160,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         etReminder.setText(mReminder.getReminder());
         useType = mReminder.getRecurring();
 
-        String label = "";
+        String label;
         if (useType) {
             label = "Interval: ";
             radioButtonRepeat.setChecked(true);
@@ -244,7 +232,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private void showNumberPickerDialog() {
         LayoutInflater inflater = getLayoutInflater();
         View dialogView = inflater.inflate(R.layout.activity_select_time, null);
-        String label = "";
+        String label;
         if (useType) {
             label = "Select Time Interval: ";
         } else {
@@ -278,7 +266,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 String hours = "";
-                String label = "";
+                String label;
                 if (useType) {
                     label = "Interval: ";
                 } else {
@@ -328,6 +316,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonMonday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         monday = !monday;
+        hideSoftKeyboard();
     }
 
     public void goToggleTuesday(View view) {
@@ -337,6 +326,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonTuesday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         tuesday = !tuesday;
+        hideSoftKeyboard();
     }
 
     public void goToggleWednesday(View view) {
@@ -346,6 +336,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonWednesday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         wednesday = !wednesday;
+        hideSoftKeyboard();
     }
 
     public void goToggleThursday(View view) {
@@ -355,6 +346,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonThursday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         thursday = !thursday;
+        hideSoftKeyboard();
     }
 
     public void goToggleFriday(View view) {
@@ -364,6 +356,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonFriday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         friday = !friday;
+        hideSoftKeyboard();
     }
 
     public void goToggleSaturday(View view) {
@@ -373,6 +366,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonSaturday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         saturday = !saturday;
+        hideSoftKeyboard();
     }
 
     public void goToggleSunday(View view) {
@@ -382,6 +376,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             buttonSunday.setBackgroundResource(R.drawable.border_style_button_on);
         }
         sunday = !sunday;
+        hideSoftKeyboard();
     }
 
     public void goSelectUse(View view) {
@@ -395,6 +390,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
                 break;
         }
         setUse();
+        hideSoftKeyboard();
     }
 
     public void setUse() {
@@ -409,8 +405,15 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
             rangeBar.setVisibility(View.GONE);
             radioButtonSingle.setChecked(true);
         }
-
     }
+
+    private void hideSoftKeyboard(){
+        if(getCurrentFocus()!=null && getCurrentFocus() instanceof EditText){
+            InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(etReminder.getWindowToken(), 0);
+        }
+    }
+
 
     //end of Edit Activity
 }

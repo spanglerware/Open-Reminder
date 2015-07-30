@@ -1,30 +1,22 @@
 package com.remindme;
 
-import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
 import android.os.Handler;
-import android.os.PowerManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 import java.util.ArrayList;
 
@@ -48,16 +40,17 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     private long spinnerDbId;
     private int spinnerRow;
-
+    private int syncCounter = 0;
     private static MainActivity instance;
 
 
-    //todo BUG alarmTime not writing correctly to db?
-
-    //todo BUG if device turned off, countdown timers continue but alarm was cancelled
-        //todo solution? overwrite all active timers with another alarm?
-
     //todo BUG float rounding causing time display to be sometimes off a second
+
+    //todo change add icon on menu bar
+
+    //todo DELETE blank reminders
+
+    //todo ADD help screen or tutorial
 
     //todo REMOVE initial entries?
 
@@ -65,7 +58,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     //todo add color to UI
 
-    //todo remove log statements for release
+    //todo REMOVE log statements for release
 
     //todo clean up and comment code in main
 
@@ -96,6 +89,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
         IntentFilter filter = new IntentFilter(AlarmService.ACTION);
         restartAlarms();
+        updateReminders();
 
         //end of MainActivity onCreate
     }
@@ -122,9 +116,6 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     protected void onPause() {
         super.onPause();
         Log.v("onPause", "Main fired onPause");
-        //from documentation: When an activity's onPause() method is called, it should commit to the backing content provider or file any changes the user has made.
-
-        //todo write data from singleton to database here?
     }
 
     @Override
@@ -218,7 +209,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         displayToast(reminderText);
     }
 
-    //this handler sets up a countdown timer for the reminders in the spinner
+    //this handler sets up a countdown timer for the reminders in the listview
     private void callHandler() {
         timerHandler = new Handler();
         timerRunnable = new Runnable() {
@@ -235,6 +226,14 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                         myAdapter.notifyDataSetChanged();
                     }
                 }
+                syncCounter++;
+                if (syncCounter >= 10) {
+                    //run sync every 10 seconds to ensure counter is sync'd with alarm
+                    updateReminders();
+                    //reset counter
+                    syncCounter = 0;
+                }
+
             }
         };
         timerRunnable.run();
@@ -313,14 +312,12 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                 cursor.moveToNext();
             }
         }
-        updateReminders();
     }
 
     private void addItemsToSpinner() {
         spinner.setAdapter(myAdapter);
     }
 
-    //todo need to examine this update for refactoring
     private void updateReminders() {
         ArrayList<Reminder> dataArray = SingletonDataArray.getInstance().getDataArray();
         for (Reminder reminder : dataArray) {
@@ -392,7 +389,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
             @Override
             public boolean onTouch(View view, MotionEvent event) {
 
-                String msg;
+//                String msg;
                 switch (event.getAction()) {
                     case MotionEvent.ACTION_DOWN: {
                         xDown = event.getX();
@@ -404,14 +401,14 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                         yUp = event.getY();
 
                         //use a minimum swipe distance before activating to distinguish between taps and swipes
-                        if (xUp - xDown > 100) {
-                            //msg = "right";
-                            //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
-                        } else if (xDown - xUp > 100) {
-                            //msg = "left";
-                            //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
-                            //createDeleteDialog();
-                        }
+//                        if (xUp - xDown > 100) {
+//                            //msg = "right";
+//                            //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+//                        } else if (xDown - xUp > 100) {
+//                            //msg = "left";
+//                            //Toast.makeText(MainActivity.this,msg,Toast.LENGTH_LONG).show();
+//                            //createDeleteDialog();
+//                        }
 
                         if (Math.abs(yDown - yUp) > 50) {
                             closeAllReminders();

@@ -5,13 +5,13 @@ package com.remindme;
  */
 public interface ReminderCallbacks {
 
-    public void startReminderCallBack(int position);
+    void startReminderCallBack(int position);
 
-    public void cancelReminderCallBack(int position);
+    void cancelReminderCallBack(int position);
 
-    public void deleteReminderCallBack(int position);
+    void deleteReminderCallBack(int position);
 
-    public void editReminderCallBack(int position);
+    void editReminderCallBack(int position);
 
-    public void notificationCallBack(String reminderText);
+    void notificationCallBack(String reminderText);
 }

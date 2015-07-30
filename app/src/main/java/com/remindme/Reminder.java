@@ -1,22 +1,9 @@
 package com.remindme;
 
-import android.content.Context;
-import android.database.Cursor;
-import android.os.Parcel;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
-
-import org.joda.time.LocalDate;
-import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
-
-import java.sql.Time;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -200,7 +187,8 @@ public class Reminder {
                     TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(time));
             long seconds = TimeUnit.MILLISECONDS.toSeconds(time) -
                     TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(time));
-            String format = "";
+
+            String format;
             if (days > 0) {
                 format = "%01dd %02d:%02d:%02d";
                 strTimer = ("" + String.format(format, days, hours, minutes, seconds));
@@ -257,7 +245,6 @@ public class Reminder {
         return changed;
     }
 
-
     //set up next alarm based on the class settings
     public long scheduleNextAlarm() {
 
@@ -274,7 +261,6 @@ public class Reminder {
         dataUpdate();
         return alarmTime;
     }
-
 
     public String getDaysAsString() {
         //returns a string containing abbreviations of the days for filling a TextView

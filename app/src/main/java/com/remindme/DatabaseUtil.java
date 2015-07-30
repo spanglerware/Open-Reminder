@@ -5,12 +5,9 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import java.sql.Time;
 
 
 public class DatabaseUtil {
-    //todo clean up and originate this code
-	//declare field names
 	private static final String FIELD_ROWID = "_id";  //need to use this specific field name so it will work with CursorAdapter
 	private static final String FIELD_REMINDER = "reminder";
 	private static final String FIELD_FREQUENCY = "frequency";
@@ -102,7 +99,6 @@ public class DatabaseUtil {
 		myDBHelper = new DatabaseHelper(mContext);
 	}
 
-
 	//open the database connection
 	public DatabaseUtil open() {
 		myDb = myDBHelper.getWritableDatabase();
@@ -122,7 +118,6 @@ public class DatabaseUtil {
         }
     }
 
-    //todo can combine insert and update methods by using a boolean parameter
 	//insert a new set of values into the main table
 	public long insertRow(String reminder, String frequency, float timeFrom, float timeTo,
                           boolean mon, boolean tue, boolean wed, boolean thu, boolean fri, boolean sat, boolean sun,
@@ -148,31 +143,6 @@ public class DatabaseUtil {
         //insert the data into the table
 		return myDb.insert(DATABASE_TABLE, null, initialValues);
 	}
-
-    //insert a new set of values into the main table
-    public long insertRow(Reminder reminder) {
-        boolean days[] = reminder.getDays();
-        ContentValues initialValues = new ContentValues();
-        initialValues.put(FIELD_REMINDER, reminder.getReminder());
-        initialValues.put(FIELD_FREQUENCY, reminder.getFrequency());
-        initialValues.put(FIELD_TIME_FROM, reminder.getTimeFrom());
-        initialValues.put(FIELD_TIME_TO, reminder.getTimeTo());
-        initialValues.put(FIELD_MONDAY, days[0]);
-        initialValues.put(FIELD_TUESDAY, days[1]);
-        initialValues.put(FIELD_WEDNESDAY, days[2]);
-        initialValues.put(FIELD_THURSDAY, days[3]);
-        initialValues.put(FIELD_FRIDAY, days[4]);
-        initialValues.put(FIELD_SATURDAY, days[5]);
-        initialValues.put(FIELD_SUNDAY, days[6]);
-        initialValues.put(FIELD_RECURRING, reminder.getRecurring());
-        initialValues.put(FIELD_NOTIFICATION_TYPE, reminder.getNotificationType());
-        initialValues.put(FIELD_MESSAGE, reminder.getMessageId());
-        initialValues.put(FIELD_ACTIVE, reminder.isActive());
-        initialValues.put(FIELD_ALARM_TIME, reminder.getAlarmTime());
-
-        //insert the data into the table
-        return myDb.insert(DATABASE_TABLE, null, initialValues);
-    }
 
     //update row in database with all parameters passed to method through Reminder class
     public int updateRow(Reminder reminder) {
@@ -213,7 +183,6 @@ public class DatabaseUtil {
 		return myDb.delete(DATABASE_TABLE, where, null) != 0;
 	}
 
-	
 	//retrieve all the data in the main table
     //todo remove additional rows for release?
 	public Cursor getAllRows() {
@@ -230,27 +199,6 @@ public class DatabaseUtil {
         }
 		return cursor;
 	}
-
-
-	//retrieve all the fields of a specific row (by rowId)
-	public Cursor getRow(long rowId) {
-		String where = FIELD_ROWID + "=" + rowId;
-		Cursor cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, where, null, null, null, null, null);
-		if (cursor.getCount() > 0) {
-			cursor.moveToFirst();
-		}
-		return cursor;
-	}
-	
-
-	//change the value of the reminder marked as current
-    public boolean changeCurrent(long currentId) {
-        String where = FIELD_ROWID + " = 1";
-        ContentValues newValues = new ContentValues();
-        newValues.put(FIELD_CURRENT_ID, currentId);
-        return myDb.update(DATABASE_TABLE_CURRENT, newValues, where, null) != 0;
-    }
-
 
     //set up override methods of DatabaseHelper class
 	private static class DatabaseHelper extends SQLiteOpenHelper
@@ -295,11 +243,6 @@ public class DatabaseUtil {
         id = cursor.getLong(COLUMN_CURRENT_ID);
         cursor.close();
         return id;
-    }
-
-
-    public long createNewEntry() {
-        return insertRow("","0",9.0f,17.0f,false,false,false,false,false,false,false,true,true,0,false,0);
     }
 
 

@@ -16,6 +16,7 @@ package com.remindme;
 
 /**
  * downloaded from: https://github.com/yahoo/android-range-seek-bar/blob/master/rangeseekbar/src/main/java/com/yahoo/mobile/client/android/util/rangeseekbar/RangeSeekBar.java
+ * modified from original
  */
 
 import android.content.Context;

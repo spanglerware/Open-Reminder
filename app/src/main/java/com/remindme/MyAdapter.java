@@ -3,7 +3,6 @@ package com.remindme;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -40,7 +39,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         public LinearLayout llSecondary;
         public LinearLayout llAll;
     }
-
 
     public MyAdapter(Context context, ListView listView, ReminderCallbacks reminderCBs) {
         super();
@@ -163,7 +161,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         }
         return complete;
     }
-
 
     private View.OnClickListener mOnStartClickListener = new View.OnClickListener() {
         @Override

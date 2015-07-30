@@ -14,9 +14,6 @@ import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import org.joda.time.LocalDate;
-import org.joda.time.LocalTime;
-
 import java.util.ArrayList;
 
 /**
@@ -121,11 +118,10 @@ public class AlarmReceiver extends BroadcastReceiver {
         toast.show();
     }
 
-    //todo refactor main start to include this one?
     private void startReminder(Context context, long alarmTime, int rowId, String reminder) {
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent alarmIntent = new Intent(context, AlarmReceiver.class);
-        //alarmIntent.setAction("com.remindme.action.ALARM_INDEF");
+
         alarmIntent.putExtra("reminder", reminder);
         alarmIntent.putExtra("rowId", rowId);
         alarmIntent.putExtra("useType", reminderUseType);
