@@ -56,15 +56,9 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private Reminder mReminder;
     private int mListPosition;
 
-    private final String EDIT_KEY = "editing";
-    private final String POSITION_KEY = "listPosition";
+    private static final String EDIT_KEY = "editing";
+    private static final String POSITION_KEY = "listPosition";
 
-    //todo handle screen rotation during edit, currently saves and adds new
-    //todo      screen rotate keeps reminder text but not frequency
-
-    //todo need to update values on selection instead of at onPause?
-
-    //todo DELETE blank reminders
 
     @Override
     public void onCreate(Bundle bundle) {
@@ -81,8 +75,8 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         } else {
             //load interface with data in case of an edit
             Intent intent = getIntent();
-            editReminder = intent.getBooleanExtra("editType", false);
-            mListPosition = intent.getIntExtra("arrayId", -1);
+            editReminder = intent.getBooleanExtra(MainActivity.EDIT_TYPE_KEY, false);
+            mListPosition = intent.getIntExtra(MainActivity.EDIT_ARRAY_ID_KEY, -1);
         }
 
         if (mListPosition < 0) { finish(); }
@@ -129,8 +123,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         mReminder.updateValues(etReminder.getText().toString(), minTime, maxTime, monday, tuesday, wednesday, thursday,
                 friday, saturday, sunday, useType, false, 0, false, 0);
         mReminder.editUpdate(editReminder, mListPosition);
-
-        //todo if reminder blank may either assign "blank reminder" value or show dialog asking to save or delete
     }
 
     @Override
@@ -198,6 +190,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
     private void createNewReminder(int arrayId) {
         //create a new record in the database with default values
         //todo may want to change default values for reminder, frequency, and days
+
         DatabaseUtil db = new DatabaseUtil();
         db.open();
         long rowId = db.insertRow("", "0", 9.0f, 17.0f, false, false, false, false,

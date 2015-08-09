@@ -3,5 +3,6 @@
   <component name="Encoding" useUTFGuessing="true" native2AsciiForPropertiesFiles="false">
     <file url="file://$PROJECT_DIR$/app/src/main/assets/fonts/testfont.ttf" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/app/src/main/res/layout/list_item_reminder.xml" charset="UTF-8" />
+    <file url="PROJECT" charset="UTF-8" />
   </component>
 </project>

@@ -26,11 +26,14 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private static final int REQUEST_NEW = 0;
     private static final int REQUEST_EDIT = 1;
     private static final int RUNNABLE_INTERVAL = 1000;  //runnable set to 1 second delay
+    public static final String EDIT_TYPE_KEY = "editType";
+    public static final String EDIT_ARRAY_ID_KEY = "arrayId";
 
     private DatabaseUtil myDb;
 
     private boolean bSelected;
     private boolean edited = false;
+    private static int editPosition = 0;
 
     public ListView spinner;
     private MyAdapter myAdapter;
@@ -48,13 +51,11 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
     //todo change add icon on menu bar
 
-    //todo DELETE blank reminders
-
     //todo ADD help screen or tutorial
 
     //todo REMOVE initial entries?
 
-    //todo need to implement onSaveInstanceState
+    //todo need to implement onSaveInstanceState?
 
     //todo add color to UI
 
@@ -172,11 +173,15 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         int id = item.getItemId();
 
         if (id == R.id.action_add) {
+            editPosition = myAdapter.getCount();
             Intent intent = new Intent(this, EditActivity.class);
-            intent.putExtra("editType", false);
-            intent.putExtra("arrayId", myAdapter.getCount());
-            startActivity(intent);
+            intent.putExtra(EDIT_TYPE_KEY, false);
+            intent.putExtra(EDIT_ARRAY_ID_KEY, editPosition);
+            startActivityForResult(intent, REQUEST_NEW);
             return true;
+        } else if (id == R.id.action_help) {
+            Intent intent = new Intent(this, HelpActivity.class);
+            startActivity(intent);
         }
 
         return super.onOptionsItemSelected(item);
@@ -422,6 +427,23 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_NEW) {
+            //check for blank reminder, delete if found
+            Reminder reminder = myAdapter.getItem(editPosition);
+            if (reminder.getReminder().equals("")) {
+                //remove from db
+                myDb.deleteRow(reminder.getRowId());
+
+                //remove from singleton
+                myAdapter.removeItem(editPosition);
+                myAdapter.notifyDataSetChanged();
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
     private void goEdit(int position) {
         Intent intent = new Intent(this, EditActivity.class);
         Reminder reminder = myAdapter.getItem(position);
@@ -432,10 +454,10 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
         }
         reminder.visibility = View.GONE;
 
-        intent.putExtra("editType", true);
-        intent.putExtra("arrayId", position);
+        intent.putExtra(EDIT_TYPE_KEY, true);
+        intent.putExtra(EDIT_ARRAY_ID_KEY, position);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        startActivity(intent);
+        startActivityForResult(intent, REQUEST_EDIT);
 
         edited = true;
     }

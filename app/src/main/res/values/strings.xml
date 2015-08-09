@@ -21,4 +21,8 @@
     <string name="select_time_minutes">Minutes</string>
     <string name="select_time_seconds">Seconds</string>
     <string name="list_item_placeholder">New Text</string>
+    <string name="title_activity_help">HelpActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_help_topic">HelpTopicActivity</string>
 </resources>

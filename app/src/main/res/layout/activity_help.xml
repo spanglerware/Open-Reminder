@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:id="@+id/scrollView"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
+    tools:context="com.remindme.HelpActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+    <TextView android:text="@string/help_main_text"
+        android:id="@+id/mainTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+
+
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="4dp">
+        <Button android:id="@+id/help_button1"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:onClick="onClickHelp"
+            android:text="@string/help_general_icon"
+            android:drawableTop="@drawable/help_original_black_48"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/help_general_title"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="4dp">
+        <Button android:id="@+id/help_button2"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:onClick="onClickHelp"
+            android:text="@string/help_create_icon"
+            android:drawableTop="@drawable/create_original_black_48"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/help_create_title"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="4dp">
+        <Button android:id="@+id/help_button3"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:onClick="onClickHelp"
+            android:text="@string/help_start_icon"
+            android:drawableTop="@drawable/start_original"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/help_start_title"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="4dp">
+        <Button android:id="@+id/help_button4"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:onClick="onClickHelp"
+            android:text="@string/help_edit_icon"
+            android:drawableTop="@drawable/edit_original"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/help_edit_title"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:padding="4dp">
+        <Button android:id="@+id/help_button5"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:onClick="onClickHelp"
+            android:text="@string/help_delete_icon"
+            android:drawableTop="@drawable/delete_original"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/help_delete_title"
+            android:layout_gravity="center_vertical"
+            android:padding="8dp"
+            />
+    </LinearLayout>
+    </LinearLayout>
+</ScrollView>
