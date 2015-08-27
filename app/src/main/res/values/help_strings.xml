@@ -52,20 +52,20 @@ Reminder Creation
 <p>
 <u>Creating</u><br>
 To create a new reminder, tap the plus icon on the action bar of the main screen that is located between the app title,
-Open Reminder, and the help symbol. Tapping on the icon will take you to the reminder editor. There,
+Open Reminder, and the help symbol. Tapping on the icon will take you to the reminder editor. In the editor
 you will be able to type in a name for the reminder, select the mode of operation (time of day or timer),
-select the time or timer interval, and select the days you would like to repeat the reminder on.
+select the time or timer interval, and select the days you would like to repeat the reminder.
 </p>
 <p>
 <u>Timer Mode</u><br>
 If timer is selected as the mode of operation, a time range selector is revealed at the bottom of the editor
 to allow the timer to operate
-between certain hours of the day, such as 9:00am to 5:00pm for example.
+between certain hours of the day, such as 9:00am to 5:00pm.
 </p>
 <p>
 <u>Time of Day Mode</u><br>
 If time of day is selected as the mode of operation, selecting the time using the number selector will
-show the hours in military format, from 0 to 24. Therefor, if you would like to set the time for 5:00pm
+show the hours in military format, from 0 to 24. Therefore, if you would like to set the time for 5:00pm
 you would need to select 17 as the hour.
 </p>
 <p>
@@ -93,20 +93,20 @@ or time intervals. The main screen contains a list of the reminders you have cre
 </p>
  <p>
  <u>Navigating</u><br>
-Navigation in Open Reminder is accomplished by selecting a button, such as create or help, to
- go to a new screen. The device\'s back button is then used to return to the main screen.
+Navigating in Open Reminder is accomplished by selecting a button, such as create or help, to
+go to a new screen. The device\'s back button is used to return to the main screen.
 </p>
 <p>
 <u>Open/Close Reminders</u><br>
 Tapping on the name
 of a reminder will expand the item and show details about the times and dates selected. This also reveals controls
-that allow you to start/stop the reminder, edit it, and delete it. Tapping on the name of the
+that allow you to start/stop the reminder, edit, or delete it. Tapping on the name of the
 reminder again will collapse the detail view.
 </p>
 <p>
 <u>Countdown Timer</u><br>
 If a reminder is running, the time displayed to the right of the name will show the time remaining
-until a notification for the reminder is sounded, plus the time will be counting down. If the reminder is
+until a notification for the reminder is sounded, additionally the time will be counting down. If the reminder is
 stopped, the time will either show the actual time a reminder is set for or the timer interval.
 </p>
  ]]>
@@ -152,11 +152,11 @@ Reminder Removal
 </b>
  </p>
 <p>
-<u>Deleting</u><br>
+<u>Removing</u><br>
 To remove a reminder from the list, first tap the name of the reminder to expand it\'s details if it is
 not already open. The delete icon will be on the right hand side of the reminder\'s details just under
 the start/stop button. Tapping on the delete icon will bring up a confirmation dialog asking if you are
-certain you would like to remove the selected reminder. Choosing yes will remove the reminder from the list.
+certain you would like to remove the selected reminder. Choosing \'yes\' will remove the reminder from the list.
 </p>
  ]]>
  </string>

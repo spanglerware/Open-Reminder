@@ -20,6 +20,7 @@ import java.util.ArrayList;
  * Created by Scott on 6/27/2015.
  */
 
+//AlarmReceiver listens for alarm broadcasts, triggers notification, and schedules following alarms
 public class AlarmReceiver extends BroadcastReceiver {
 
     private float floatFrequency;
@@ -47,17 +48,17 @@ public class AlarmReceiver extends BroadcastReceiver {
         timeTo = intent.getFloatExtra("timeTo", -1);
         messageDays = intent.getIntegerArrayListExtra("days");
 
-        if (mContext != null) {
-            Log.d("alarm receiver", "context not null");
-        } else {
-            Log.d("alarm receiver", "context null");
-        }
+//        if (mContext != null) {
+//            Log.d("alarm receiver", "context not null");
+//        } else {
+//            Log.d("alarm receiver", "context null");
+//        }
 
         if (rowId < 0) {
-            Log.d("alarm receiver", "received default value from intent extra, exiting ...");
+//            Log.d("alarm receiver", "received default value from intent extra, exiting ...");
             return;
-        } else {
-            Log.d("alarm receiver", "intent extra rowId: " + rowId);
+//        } else {
+//            Log.d("alarm receiver", "intent extra rowId: " + rowId);
         }
 
         PowerManager powerManager = (PowerManager) mContext.getSystemService(Context.POWER_SERVICE);
@@ -95,7 +96,7 @@ public class AlarmReceiver extends BroadcastReceiver {
                 //update database active to false here
                 db.updateSelectRow(DatabaseUtil.FIELD_ACTIVE, rowId, String.valueOf(false));
             }
-            Log.d("Alarm Receiver", "next alarm: " + nextAlarm);
+//            Log.d("Alarm Receiver", "next alarm: " + nextAlarm);
         }
 
         db.close();

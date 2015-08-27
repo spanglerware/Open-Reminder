@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
+//HelpTopicActivity displays a help screen for the topic selected in HelpActivity
 public class HelpTopicActivity extends Activity {
 
     private int mTextResourceId;

@@ -21,6 +21,7 @@ import android.widget.TextView;
  * Created by Scott on 4/18/2015.
  */
 
+//EditActivity displays an editor that is blank for new reminders and filled in for existing reminders
 public class EditActivity extends Activity implements NumberPicker.OnValueChangeListener {
     private EditText etReminder;
     private TextView textViewFrequency;
@@ -91,7 +92,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         minTime = mReminder.getTimeFrom();
         maxTime = mReminder.getTimeTo();
 
-        //todo move to assignObjects method, use stored values
         rangeBar = new RangeSeekBar<Float>(this);
         rangeBar.setRangeValues(0.0f, 24.0f);
         rangeBar.setSelectedMinValue(9.0f);
@@ -114,7 +114,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         setUse();
         textViewFrequency.requestFocus();
-
     }  //end of 0nCreate
 
     @Override
@@ -168,7 +167,7 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
         npMinute = frequency / (60 * 1000);
         if (npMinute > 0) { frequency -= npMinute * 60 * 1000; }
         npSecond = frequency / 1000;
-        Log.v("Edit Activity", "Hour: " + npHour + ", Minute: " + npMinute + ", Second: " + npSecond);
+        //Log.v("Edit Activity", "Hour: " + npHour + ", Minute: " + npMinute + ", Second: " + npSecond);
 
         monday = days[0];
         if (monday) { buttonMonday.setBackgroundResource(R.drawable.border_style_button_on); }
@@ -189,7 +188,6 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
     private void createNewReminder(int arrayId) {
         //create a new record in the database with default values
-        //todo may want to change default values for reminder, frequency, and days
 
         DatabaseUtil db = new DatabaseUtil();
         db.open();

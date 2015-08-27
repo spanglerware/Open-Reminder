@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+//HelpActivity sets up the help screen and triggers HelpTopicActivity to show depending on the selection
 public class HelpActivity extends Activity {
 
     public static final String HELP_ID_KEY = "helpIdKey";
@@ -47,14 +48,13 @@ public class HelpActivity extends Activity {
                 textId = R.string.help_edit;
                 break;
             case R.id.help_button5 :
-                //help with deleting, necessary?
+                //help with deleting
                 textId = R.string.help_delete;
                 break;
             default:
                 break;
         }
         if (textId >= 0) startInfoActivity(textId);
-//        else toast ("Detailed Help for that topic is not available.", true);
     }
 
     public void startInfoActivity (int textId)

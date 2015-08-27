@@ -19,20 +19,22 @@ import java.util.ArrayList;
  * Created by Scott on 4/26/2015.
  */
 
+//MyAdapter provides reminder data for the list view in MainActivity and implements callbacks for
+    //events triggered from within the list
 public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
 
     private final Context mContext;
     protected ListView mListView;
     private ReminderCallbacks reminderCallbacks;
 
-    static class TestViewHolder {
+//view holder is used to store controls for improved performance
+    static class ReminderViewHolder {
         public TextView tvHolderReminder;
         public TextView tvHolderFrequency;
         public TextView tvHolderRowId;
         public TextView tvHolderCounter;
         public TextView tvHolderDays;
         public TextView tvHolderTimes;
-//        public TextView tvHolderNotType;
         public Button  btnStart;
         public Button btnEdit;
         public Button btnDelete;
@@ -40,6 +42,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         public LinearLayout llAll;
     }
 
+    //public constructor
     public MyAdapter(Context context, ListView listView, ReminderCallbacks reminderCBs) {
         super();
         mContext = context;
@@ -47,6 +50,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         reminderCallbacks = reminderCBs;
     }
 
+    //MyAdapter uses following methods to provide layer of abstraction between MainActivity and the Singleton
     public int getCount() {
         return SingletonDataArray.getInstance().getSize();
     }
@@ -64,16 +68,18 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         return position;
     }
 
+    //getView implements the view holder for improved performance
+    //this method also controls visibility of list items' expanded details
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         View rowView = convertView;
-        TestViewHolder viewHolder;
+        ReminderViewHolder viewHolder;
 
         if (rowView == null) {
             LayoutInflater inflater = (LayoutInflater) mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             rowView = inflater.inflate(R.layout.list_item_reminder, parent, false);
 
-            viewHolder = new TestViewHolder();
+            viewHolder = new ReminderViewHolder();
             viewHolder.tvHolderRowId = (TextView) rowView.findViewById(R.id.list_item_reminder_id);
             viewHolder.tvHolderReminder = (TextView) rowView.findViewById(R.id.list_item_reminder_text);
             viewHolder.tvHolderCounter = (TextView) rowView.findViewById(R.id.list_item_reminder_counter);
@@ -100,8 +106,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             viewHolder.tvHolderFrequency.setTextColor(color);
             viewHolder.tvHolderDays.setTypeface(typeface);
             viewHolder.tvHolderDays.setTextColor(color);
-//            viewHolder.tvHolderNotType.setTypeface(typeface);
-//            viewHolder.tvHolderNotType.setTextColor(color);
             viewHolder.tvHolderTimes.setTypeface(typeface);
             viewHolder.tvHolderTimes.setTextColor(color);
             viewHolder.tvHolderCounter.setTypeface(typeface);
@@ -109,7 +113,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
 
             rowView.setTag(viewHolder);
         } else {
-            viewHolder = (TestViewHolder) rowView.getTag();
+            viewHolder = (ReminderViewHolder) rowView.getTag();
         }
 
         Reminder item = getItem(position);
@@ -124,7 +128,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             viewHolder.tvHolderFrequency.setText(label + item.getFormattedFrequency());
             viewHolder.tvHolderTimes.setVisibility(View.VISIBLE);
             viewHolder.tvHolderTimes.setText("Time: " + item.getTimeFromAsString() + " - " + item.getTimeToAsString());
-            //holder.llAll.setOrientation(LinearLayout.HORIZONTAL);
         } else {
             label = "Time: ";
             viewHolder.tvHolderFrequency.setText(label + TimeUtil.FloatTimeToStringExact(item.getFloatFrequency()));
@@ -135,7 +138,6 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         viewHolder.tvHolderDays.setText("Days: " + item.getDaysAsString());
 //        Log.d("myadapter getview", "days = " + item.getDaysAsString());
 //        Log.d("myadapter getview", "visibility = " + item.visibility);
-//        tvN.setText("Type: " + (item.getNotificationType() ? "Alarm" : "Notification"));
 
         viewHolder.llSecondary.setVisibility(item.visibility);
         if (item.visibility == View.GONE) {
@@ -146,8 +148,9 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         setButtonImage(!item.isActive(), viewHolder.btnStart);
 
         return rowView;
-    }
+    } //end of getView method
 
+    //reduceCounters is used to decrease the countdown timers for all active reminders
     public boolean reduceCounters(long interval) {
         int listSize = getCount();
         boolean complete = false;
@@ -162,6 +165,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         return complete;
     }
 
+    //event listener for the start/stop control
     private View.OnClickListener mOnStartClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -180,18 +184,20 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         }
     };
 
+    //event listener for the edit control
     private View.OnClickListener mOnEditClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
             View tempView = ((View) (view.getParent()).getParent());
             final int position = mListView.getPositionForView((View) view.getParent());
-            TestViewHolder viewHolder = (TestViewHolder) tempView.getTag();
+            ReminderViewHolder viewHolder = (ReminderViewHolder) tempView.getTag();
 
             setButtonImage(true, viewHolder.btnStart);
             reminderCallbacks.editReminderCallBack(position);
         }
     };
 
+    //event listener for edit control
     private View.OnClickListener mOnDeleteClickListener = (new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -200,6 +206,8 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         }
     });
 
+    //onTouch event used to set the focus in order to prevent multiple reminders from being
+        //expanded at the same time
     @Override
     public boolean onTouch(View view, MotionEvent motionEvent) {
 
@@ -208,7 +216,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
             button.setFocusable(true);
             button.setFocusableInTouchMode(true);
         } else {
-            TestViewHolder viewHolder = (TestViewHolder) view.getTag();
+            ReminderViewHolder viewHolder = (ReminderViewHolder) view.getTag();
             viewHolder.btnEdit.setFocusableInTouchMode(false);
             viewHolder.btnEdit.setFocusable(false);
             viewHolder.btnStart.setFocusable(false);
@@ -219,6 +227,7 @@ public class MyAdapter extends BaseAdapter implements View.OnTouchListener {
         return false;
     }
 
+    //setButtonImage alternates the image of the start/stop control
     private void setButtonImage(boolean toStart, View view) {
         Button startButton = (Button) view;
 

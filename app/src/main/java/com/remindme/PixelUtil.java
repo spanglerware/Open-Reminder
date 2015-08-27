@@ -19,8 +19,9 @@ import android.content.Context;
 import android.util.DisplayMetrics;
 
 /**
- * Created by Scott on 6/4/2015.
+ * downloaded from: https://github.com/yahoo/android-range-seek-bar/blob/master/rangeseekbar/src/main/java/com/yahoo/mobile/client/android/util/PixelUtil.java
  */
+
 public class PixelUtil {
 
     private PixelUtil() {

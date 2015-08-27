@@ -8,11 +8,10 @@ import java.util.ArrayList;
  * Created by Scott on 6/14/2015.
  */
 
+//TimeUtil contains methods for manipulating and displaying times
 public class TimeUtil {
 
     private TimeUtil () {}
-
-    //todo re-write FloatTimeToString functions into one method with parameters
 
     public static String FloatTimeToString(float timeValue) {
         boolean flag = false;
@@ -106,6 +105,8 @@ public class TimeUtil {
         return timeText;
     }
 
+    //scheduleAlarm is used to calculate the next alarm time of a reminder depending on the mode of
+        //operation, the selected daily time range, and the selected days
     public static long scheduleAlarm(boolean useType, float frequency,
                                          ArrayList<Integer> days, float timeFrom,
                                          float timeTo) {
@@ -185,7 +186,7 @@ public class TimeUtil {
 
         nextTime -= currentTime;
         return TimeUtil.FloatTimeToMilliseconds(nextTime);
-    }
+    } //end of scheduleAlarm
 
 
 

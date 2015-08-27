@@ -16,6 +16,7 @@ import android.util.Log;
  * Created by Scott on 5/5/2015.
  */
 
+//AlarmService is used to create the notifications after AlarmReceiver receives a broadcast
 public class AlarmService extends IntentService {
     private static final int NOTIFICATION_ID = 1;
     public static final String ACTION = "com.remindme.AlarmService";
@@ -32,7 +33,7 @@ public class AlarmService extends IntentService {
 
     @Override
     public void onHandleIntent(Intent intent) {
-        Log.d("AlarmService", "Preparing to send notification...");
+//        Log.d("AlarmService", "Preparing to send notification...");
         NotificationManager alarmNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
 
         String reminder = intent.getStringExtra("reminder");
@@ -59,8 +60,7 @@ public class AlarmService extends IntentService {
         alarmNotificationBuilder.setContentIntent(contentIntent);
         alarmNotificationManager.notify(NOTIFICATION_ID, alarmNotificationBuilder.build());
 
-        Log.d("AlarmService", "Notification sent.");
-
+//        Log.d("AlarmService", "Notification sent.");
     }
 
 

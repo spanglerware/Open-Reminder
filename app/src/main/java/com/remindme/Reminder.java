@@ -9,31 +9,34 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Scott on 4/26/2015.
  */
+
+//Reminder class provides a structure for organizing the data and methods of each reminder
 public class Reminder {
     public static boolean mOpened = false;
 
     private long rowId;  //id of reminder in the database
     private int reminderId; //id of reminder that corresponds with position in dataArray
-    private String reminder;
-    private String frequency;
-    private float floatFrequency;
-    private float timeFrom;
-    private float timeTo;
+    private String reminder; //name of the reminder
+    private String frequency; //represents either the time of day or the countdown timer
+    private float floatFrequency; //the frequency in decimal hours
+    private float timeFrom; //start time of a daily reminder's time range
+    private float timeTo; //end time of a daily reminder's time range
 
     private boolean monday, tuesday, wednesday, thursday, friday, saturday, sunday;
-    private ArrayList<Integer> messageDays;
+    private ArrayList<Integer> messageDays; //array containing boolean representations of selected days
     private boolean reminderUseType;  //true for recurring, false for single use
     private boolean notificationType;  //true for notification, false for alarm
     private int messageId; //this is the position of the alarm or notification sound setting
     private long alarmTime;  //this time is when the next alarm is set for, value is in calendar millis
 
-    private boolean active;
-    public boolean bSelected;
+    private boolean active; //active reminders have been started and are counting down
+    public boolean bSelected; //selected indicates a reminder currently selected in the list view
     private long counter;  //the counter is the current value of the countdown timer in milliseconds
+
     private static final String FORMAT = "%01dd %01d:%01d:%02d";
-    public int visibility = View.GONE;
+    public int visibility = View.GONE; //visibility used to indicate which reminder is expanded in list view
 
-
+    //public constructor used to set up a new reminder or load one from the database
     public Reminder (int remId, String rem, String freq, long id, float fTimeFrom, float fTimeTo, boolean bMonday, boolean bTuesday, boolean bWednesday,
                      boolean bThursday, boolean bFriday, boolean bSaturday, boolean bSunday,
                      boolean bUseType, boolean bNotType, int iMsgId, boolean bActive, long lAlarmTime) {
@@ -157,6 +160,7 @@ public class Reminder {
         dataUpdate();
     }
 
+    //resets the countdown timer
     public void resetCounter() {
         LocalTime localTime = LocalTime.now();
         float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
@@ -172,6 +176,7 @@ public class Reminder {
         }
     }
 
+    //formats the countdown timer for display
     public String getCounterAsString() {
         long time = counter;
         String strTimer;
@@ -211,7 +216,7 @@ public class Reminder {
     public boolean reduceCounter(long increment) {
         long time = counter;
         boolean nextAlarm = false;
-        Log.v("reduceCounter start", "active: " + active + ", counter: " + counter);
+//        Log.v("reduceCounter start", "active: " + active + ", counter: " + counter);
         if (active) {
             if (time <= 0) {
                 long newTime = scheduleNextAlarm();  //need return value for updating counter, if 0 can set active to false
@@ -227,11 +232,11 @@ public class Reminder {
             }
             counter = time;
         }
-        Log.v("reduceCounter end", "counter: " + counter + ", next alarm: " + nextAlarm);
+//        Log.v("reduceCounter end", "counter: " + counter + ", next alarm: " + nextAlarm);
         return nextAlarm;  //this indicates whether or not the timer has completed
     }
 
-    //need an update method for the counter for when the app wakes from the background
+    //an update method for the counter for when the app wakes from the background
     public boolean updateCounter() {
         boolean changed = false;
         if (active) {
@@ -262,9 +267,9 @@ public class Reminder {
         return alarmTime;
     }
 
+    //returns a string containing abbreviations of the days for filling a TextView
+    //can return a collection of days, Monday-Friday, Weekend, All Week, etc
     public String getDaysAsString() {
-        //returns a string containing abbreviations of the days for filling a TextView
-        //can return a collection of days, Monday-Friday, Weekend, All Week, etc
         String days[] = new String[7];
         String stringDays = "";
         int firstDay = -1;
@@ -298,6 +303,7 @@ public class Reminder {
         return stringDays;
     }
 
+    //updates the singleton after an edit
     public void editUpdate(boolean editedReminder, int position){
         if (!editedReminder) {
             SingletonDataArray.getInstance().addReminder(this);
@@ -306,14 +312,16 @@ public class Reminder {
         }
     }
 
+    //updates the database after a change
     public void dataUpdate() {
         DatabaseUtil db = new DatabaseUtil();
         db.open();
         db.updateRow(this);
         db.close();
-        Log.d("reminder dataUpdate", "updating database");
+//        Log.d("reminder dataUpdate", "updating database");
     }
 
+    //updates values within this reminder
     public void updateValues(String rem, float fTimeFrom, float fTimeTo, boolean bMonday, boolean bTuesday, boolean bWednesday,
                              boolean bThursday, boolean bFriday, boolean bSaturday, boolean bSunday,
                              boolean bUseType, boolean bNotType, int iMsgId, boolean bActive, long lAlarmTime) {
@@ -340,6 +348,7 @@ public class Reminder {
         counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
     }
 
+    //changes visibility of the reminder
     public void toggleVisibility()
     {
         if(visibility==View.GONE) {

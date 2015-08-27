@@ -6,6 +6,7 @@ import java.util.ArrayList;
  * Created by Scott on 6/8/2015.
  */
 
+//singleton pattern used to manage reminder data
 public class SingletonDataArray {
     private ArrayList<Reminder> dataArray;
     private static SingletonDataArray instance;
@@ -55,7 +56,6 @@ public class SingletonDataArray {
     public int getSize() {
         return dataArray.size();
     }
-
 
 
 }  //end of SingletonDataArray class

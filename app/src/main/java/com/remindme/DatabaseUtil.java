@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 
+//DatabaseUtil handles reading and writing data to the SQLiteDatabase
 public class DatabaseUtil {
 	private static final String FIELD_ROWID = "_id";  //need to use this specific field name so it will work with CursorAdapter
 	private static final String FIELD_REMINDER = "reminder";
@@ -110,6 +111,7 @@ public class DatabaseUtil {
         myDBHelper.close();
 	}
 
+    //method to check if context has been set
     public static boolean hasContext() {
         if (mContext != null) {
             return true;
@@ -184,18 +186,10 @@ public class DatabaseUtil {
 	}
 
 	//retrieve all the data in the main table
-    //todo remove additional rows for release?
 	public Cursor getAllRows() {
 		Cursor cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
-		if (cursor.getCount() == 1) {
-            insertRow("Walk the Dog", "5", 9.0f, 17.0f, true, true, true, false, false, true, true, true, true, 0, false, 0);
+		if (cursor.getCount() > 0) {
             cursor.moveToFirst();
-        } else if (cursor.getCount() > 1) {
-            cursor.moveToFirst();
-		} else {
-            insertRow("Take a Break!","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
-            insertRow("Walk the Dog","5",9.0f,17.0f,true,true,true,false,false,true,true,true,true,0,false,0);
-            cursor = myDb.query(true, DATABASE_TABLE, ALL_FIELDS, null, null, null, null, null, null);
         }
 		return cursor;
 	}
