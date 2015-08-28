@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import android.content.ContentValues;
 import android.content.Context;

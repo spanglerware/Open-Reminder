@@ -10,7 +10,7 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:orientation="vertical"
-    tools:context="com.remindme.HelpActivity">
+    tools:context="com.openreminder.HelpActivity">
 
     <LinearLayout
         android:layout_width="match_parent"

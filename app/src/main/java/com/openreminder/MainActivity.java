@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import android.app.AlarmManager;
 import android.app.AlertDialog;
@@ -10,7 +10,6 @@ import android.database.Cursor;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -18,6 +17,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.openreminder.R;
+
 import java.util.ArrayList;
 
 //MainActivity loads the data and sets up the list view containing the reminders
@@ -47,7 +49,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     private static MainActivity instance;
 
 
-    //in onCreate method, load data into list view and register event handlers
+    //onCreate method loads data into list view and registers event handlers
     @Override
     protected void onCreate(Bundle bundle) {
         super.onCreate(bundle);
@@ -166,7 +168,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
     public void startReminderCallBack(int position) {
         Reminder reminder = myAdapter.getItem(position);
         reminder.setActive(true);
-        startReminder(position);
+        if (reminder.getAlarmTime() > 0) startReminder(position);
     }
 
     //callback from MyAdapter when delete icon of a reminder is tapped

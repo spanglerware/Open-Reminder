@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 /**
  * Created by Scott on 6/15/2015.

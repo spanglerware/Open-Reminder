@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import android.app.IntentService;
 import android.app.Notification;
@@ -10,7 +10,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
-import android.util.Log;
+
+import com.openreminder.R;
 
 /**
  * Created by Scott on 5/5/2015.
@@ -19,7 +20,7 @@ import android.util.Log;
 //AlarmService is used to create the notifications after AlarmReceiver receives a broadcast
 public class AlarmService extends IntentService {
     private static final int NOTIFICATION_ID = 1;
-    public static final String ACTION = "com.remindme.AlarmService";
+    public static final String ACTION = "AlarmService";
 
     public AlarmService() {
         super("Alarm Service");

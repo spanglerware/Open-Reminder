@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import java.util.ArrayList;
 

@@ -1,6 +1,5 @@
-package com.remindme;
+package com.openreminder;
 
-import android.util.Log;
 import android.view.View;
 import org.joda.time.LocalTime;
 import java.util.ArrayList;
@@ -147,16 +146,25 @@ public class Reminder {
         LocalTime localTime = LocalTime.now();
         float currentTime = TimeUtil.MillisecondsToFloatTime(localTime.getMillisOfDay());
 
-        if (reminderUseType) {
-            counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
-        } else {
-            if (floatFrequency >= currentTime) {
-                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime);
+//        if (reminderUseType) {
+//            counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
+//        } else {
+//            if (floatFrequency >= currentTime) {
+//                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime);
+//            } else {
+//                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime + 24);
+//            }
+//        }
+        if (active) {
+            alarmTime = TimeUtil.scheduleAlarm(reminderUseType, floatFrequency, messageDays,
+                    timeFrom, timeTo);
+            if (alarmTime > 0) {
+                counter = alarmTime;
+                alarmTime += System.currentTimeMillis();
             } else {
-                counter = TimeUtil.FloatTimeToMilliseconds(floatFrequency - currentTime + 24);
+                active = false;
             }
         }
-        alarmTime = systemTime + counter;
         dataUpdate();
     }
 

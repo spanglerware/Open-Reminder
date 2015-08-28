@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -6,7 +6,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +15,8 @@ import android.widget.EditText;
 import android.widget.NumberPicker;
 import android.widget.RadioButton;
 import android.widget.TextView;
+
+import com.openreminder.R;
 
 /**
  * Created by Scott on 4/18/2015.
@@ -94,15 +95,13 @@ public class EditActivity extends Activity implements NumberPicker.OnValueChange
 
         rangeBar = new RangeSeekBar<Float>(this);
         rangeBar.setRangeValues(0.0f, 24.0f);
-        rangeBar.setSelectedMinValue(9.0f);
-        rangeBar.setSelectedMaxValue(17.0f);
         rangeBar.setPadding(10, 0, 10, 0);
 
         rangeBar.setOnRangeSeekBarChangeListener(new RangeSeekBar.OnRangeSeekBarChangeListener<Float>() {
             @Override
             public void onRangeSeekBarValuesChanged(RangeSeekBar<?> bar, Float minValue, Float maxValue) {
-                minTime = minValue;
-                maxTime = maxValue;
+                minTime = TimeUtil.ExactFloatToRoundedFloat(minValue);
+                maxTime = TimeUtil.ExactFloatToRoundedFloat(maxValue);
             }
         });
 

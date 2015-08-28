@@ -1,15 +1,14 @@
-package com.remindme;
+package com.openreminder;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
+
+import com.openreminder.R;
 
 //HelpActivity sets up the help screen and triggers HelpTopicActivity to show depending on the selection
 public class HelpActivity extends Activity {

@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -12,6 +12,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
+
+import com.openreminder.R;
 
 import java.util.ArrayList;
 

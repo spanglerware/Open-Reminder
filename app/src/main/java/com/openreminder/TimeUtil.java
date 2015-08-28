@@ -1,4 +1,4 @@
-package com.remindme;
+package com.openreminder;
 
 import org.joda.time.LocalDate;
 import org.joda.time.LocalTime;
@@ -13,6 +13,19 @@ public class TimeUtil {
 
     private TimeUtil () {}
 
+    //rounds the float time value to 10 minute increments
+    public static Float ExactFloatToRoundedFloat(float timeValue) {
+        int hour = (int) Math.floor(timeValue);
+        int minute = (int) Math.round((timeValue - hour) * 6) * 10;
+        if (minute == 60) {
+            minute = 0;
+            hour += 1;
+        }
+
+        return (hour + (minute / 60.0f));
+    }
+
+    //formats a float time for display
     public static String FloatTimeToString(float timeValue) {
         boolean flag = false;
         String timeText;
@@ -50,6 +63,7 @@ public class TimeUtil {
         return (float) timeValue / 3600000.0f;
     }
 
+    //formats a float time into hours:minutes:seconds for countdown timers
     public static String FloatTimeToStringHMS(float timeValue) {
         int hours, minutes, seconds;
         hours = (int) Math.floor(timeValue);
@@ -71,6 +85,7 @@ public class TimeUtil {
         return formattedFreq;
     }
 
+    //formats float time into an exact time value
     public static String FloatTimeToStringExact(float timeValue) {
         boolean flag = false;
         String timeText;

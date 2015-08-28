@@ -12,7 +12,7 @@ limitations under the License.
 */
 
 
-package com.remindme;
+package com.openreminder;
 
 /**
  * downloaded from: https://github.com/yahoo/android-range-seek-bar/blob/master/rangeseekbar/src/main/java/com/yahoo/mobile/client/android/util/rangeseekbar/RangeSeekBar.java
@@ -31,7 +31,7 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.ImageView;
 
-import com.remindme.PixelUtil;
+import com.openreminder.R;
 
 import java.math.BigDecimal;
 
@@ -109,7 +109,6 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     private static final int DEFAULT_TEXT_MAX_VALUE_Y_OFFSET = 10;
     private boolean mSingleThumb;
 
-    //todo fix display error on min/max selections
 
     public RangeSeekBar(Context context) {
         super(context);
@@ -478,7 +477,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
         mRect.right = getWidth() - padding;
         canvas.drawRect(mRect, paint);
 
-        //todo selectedValuesAreDefault causing problems, disabled for now
+        //selectedValuesAreDefault causing problems, disabled for now
 //        boolean selectedValuesAreDefault = (getSelectedMinValue().equals(getAbsoluteMinValue()) &&
 //                getSelectedMaxValue().equals(getAbsoluteMaxValue()));
         boolean selectedValuesAreDefault = false;
@@ -511,7 +510,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
             // give text a bit more space here so it doesn't get cut off
             int offset = PixelUtil.dpToPx(getContext(), TEXT_LATERAL_PADDING_IN_DP);
 
-            //todo format string for dates, round to nearest 10 minutes
+            //format string for dates, round to nearest 10 minutes
             T min = getSelectedMinValue();
             T max = getSelectedMaxValue();
 
@@ -532,7 +531,6 @@ public class RangeSeekBar<T extends Number> extends ImageView {
             float minTextX = normalizedToScreen(normalizedMinValue) - minTextWidth * 0.5f;
             float maxTextX = normalizedToScreen(normalizedMaxValue) - maxTextWidth * 0.5f;
 
-            //todo needs more work to prevent overlap
             if (pressedThumb == Thumb.MIN) {
                 if ((maxTextX - minTextX) < 70) {
                     minTextX = maxTextX - 70;
@@ -541,10 +539,8 @@ public class RangeSeekBar<T extends Number> extends ImageView {
                 if ((maxTextX - minTextX) < 70) {
                     maxTextX = minTextX + 70;
                 }
-                //todo need more conditions around edges
             } else if (pressedThumb == null) {
                 if ((maxTextX - minTextX) < 70) {
-                    //todo set up or condition for thumb close to edge
                     if (previousPressed == Thumb.MIN) {
                         minTextX = maxTextX - 70;
                     } else {
@@ -607,7 +603,7 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     private void drawThumb(float screenCoord, boolean pressed, Canvas canvas, boolean areSelectedValuesDefault) {
         Bitmap buttonToDraw;
         if (areSelectedValuesDefault) {
-            //todo disabled image causing problems, set to thumbImage for now
+            //disabled image causing problems, set to thumbImage for now
             //buttonToDraw = thumbDisabledImage;
             buttonToDraw = thumbImage;
         } else {
@@ -680,7 +676,6 @@ public class RangeSeekBar<T extends Number> extends ImageView {
     @SuppressWarnings("unchecked")
     private T normalizedToValue(double normalized) {
         double v = absoluteMinValuePrim + normalized * (absoluteMaxValuePrim - absoluteMinValuePrim);
-        // TODO parameterize this rounding to allow variable decimal points
         return (T) numberType.toNumber(Math.round(v * 100) / 100d);
     }
 
