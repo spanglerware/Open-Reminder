@@ -186,13 +186,12 @@ public class Reminder {
 
     //formats the countdown timer for display
     public String getCounterAsString() {
-        long time = counter;
+        long time = alarmTime - System.currentTimeMillis();
         String strTimer;
-        if (time == 0) {
-            strTimer = "";
-        } else if (!reminderUseType && !active) {
+        if (!reminderUseType && !active) {
             strTimer = TimeUtil.FloatTimeToStringExact(floatFrequency);
         } else {
+            if (reminderUseType && !active) time = TimeUtil.FloatTimeToMilliseconds(floatFrequency);
             long days = TimeUnit.MILLISECONDS.toDays(time);
             long hours = TimeUnit.MILLISECONDS.toHours(time) -
                     TimeUnit.DAYS.toHours(TimeUnit.MILLISECONDS.toDays(time));

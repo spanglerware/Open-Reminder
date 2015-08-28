@@ -208,10 +208,10 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                 for (int i = 0; i < arraySize; i++) {
                     Reminder reminder = myAdapter.getItem(i);
                     if (reminder.isActive()) {
-                        reminder.reduceCounter(interval);
-                        myAdapter.notifyDataSetChanged();
+                        //reminder.reduceCounter(interval);
                     }
                 }
+
                 syncCounter++;
                 if (syncCounter >= 10) {
                     //run sync every 10 seconds to ensure counter is synchronized with alarm
@@ -219,6 +219,8 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
                     //reset counter
                     syncCounter = 0;
                 }
+
+                myAdapter.notifyDataSetChanged();
             }
         };
         timerRunnable.run();
@@ -363,7 +365,7 @@ public class MainActivity extends ActionBarActivity implements ReminderCallbacks
 
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         Intent alarmIntent = new Intent(getApplicationContext(), AlarmReceiver.class);
-        //alarmIntent.setAction("com.remindme.action.ALARM_INDEF");
+        //alarmIntent.setAction("com.openreminder.action.ALARM_INDEF");
         alarmIntent.putExtra("reminder", reminder.getReminder());
         alarmIntent.putExtra("rowId", rowId);
         alarmIntent.putExtra("useType", reminder.getUseType());
